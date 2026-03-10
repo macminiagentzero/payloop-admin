@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: payloop-admin
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: payloop-db
+          property: connectionString
+      - key: ADMIN_EMAIL
+        value: admin@mellone.co
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: NEXT_PUBLIC_APP_NAME
+        value: PayLoop Admin
+
+databases:
+  - name: payloop-db
+    databaseName: payloop
+    user: payloop_user

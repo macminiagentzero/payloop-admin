@@ -1,0 +1,113 @@
+// PayLoop Dashboard - Same database as checkout (exact match)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Customer information
+model Customer {
+  id               String   @id @default(uuid())
+  email            String   @unique
+  firstName        String
+  lastName         String
+  phone            String?
+  address          String?
+  city             String?
+  state            String?
+  zip              String?
+  country          String   @default("US")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  paymentMethods PaymentMethod[]
+  orders          Order[]
+  subscriptions   Subscription[]
+}
+
+// Payment methods
+model PaymentMethod {
+  id             String   @id @default(uuid())
+  customerId     String
+  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  nmiVaultId     String?  @unique
+  
+  cardLast4      String
+  cardType       String
+  cardExpMonth   String
+  cardExpYear    String
+  
+  isDefault      Boolean  @default(false)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  orders        Order[]
+}
+
+// Orders
+model Order {
+  id              String   @id @default(uuid())
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  paymentMethodId String?
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  
+  gatewayId       String?
+  
+  type            String   @default("initial")
+  
+  subtotal        Float    @default(0)
+  tax             Float    @default(0)
+  shipping        Float    @default(0)
+  total           Float
+  currency        String   @default("USD")
+  
+  items           String
+  
+  nmiTransactionId String?  @unique
+  nmiAuthCode      String?
+  nmiResponse      String?
+  
+  status          String   @default("pending")
+  errorMessage    String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Payment gateways
+model PaymentGateway {
+  id              String   @id @default(uuid())
+  name            String   @unique
+  displayName     String
+  type            String
+  isActive        Boolean  @default(true)
+  isDefault       Boolean  @default(false)
+  
+  nmiSecurityKey  String?
+  nmiEndpoint     String?
+  nmiMerchantId   String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Subscriptions - minimal fields that exist in DB
+model Subscription {
+  id              String   @id @default(uuid())
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  name            String
+  status          String   @default("active")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
