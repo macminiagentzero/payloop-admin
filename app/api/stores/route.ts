@@ -1,9 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+interface StoreResult {
+  id: string
+  name: string
+  domain: string
+  isActive: boolean
+  lastSyncAt: Date | null
+  productCount: number
+  createdAt: Date
+}
+
 export async function GET() {
   try {
-    const stores = await prisma.$queryRaw`
+    const stores = await prisma.$queryRaw<StoreResult[]>`
       SELECT id, name, domain, "isActive", "lastSyncAt", "productCount", "createdAt"
       FROM "ShopifyStore"
       ORDER BY "createdAt" DESC
@@ -30,9 +40,9 @@ export async function POST(request: Request) {
     const normalizedDomain = domain.replace(/^https?:\/\//, '').replace(/\/$/, '')
 
     // Check if store already exists
-    const existing = await prisma.$queryRaw`
+    const existing = await prisma.$queryRaw<StoreResult[]>`
       SELECT id FROM "ShopifyStore" WHERE domain = ${normalizedDomain}
-    ` as any[]
+    `
 
     if (existing.length > 0) {
       return NextResponse.json(
@@ -42,10 +52,10 @@ export async function POST(request: Request) {
     }
 
     // Create store using raw query
-    const result = await prisma.$queryRaw`
+    const result = await prisma.$queryRaw<StoreResult[]>`
       INSERT INTO "ShopifyStore" (name, domain, "accessToken", "isActive", "productCount", "createdAt", "updatedAt")
       VALUES (${name}, ${normalizedDomain}, ${accessToken}, true, 0, NOW(), NOW())
-      RETURNING id
+      RETURNING id, name, domain, "isActive", "lastSyncAt", "productCount", "createdAt"
     `
 
     return NextResponse.json({ success: true, store: result[0] })

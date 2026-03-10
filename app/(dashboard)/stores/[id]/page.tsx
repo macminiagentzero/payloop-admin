@@ -7,15 +7,36 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
+interface StoreResult {
+  id: string
+  name: string
+  domain: string
+  isActive: boolean
+  lastSyncAt: Date | null
+  productCount: number
+  createdAt: Date
+}
+
+interface ProductResult {
+  id: string
+  shopifyId: string
+  title: string
+  handle: string | null
+  status: string
+  image: string | null
+  price: number | null
+  syncedAt: Date | null
+}
+
 export default async function StoreDetailPage({ params }: Props) {
   const { id } = await params
 
   // Get store details
-  const stores = await prisma.$queryRaw`
+  const stores = await prisma.$queryRaw<StoreResult[]>`
     SELECT id, name, domain, "isActive", "lastSyncAt", "productCount", "createdAt"
     FROM "ShopifyStore"
     WHERE id = ${id}
-  ` as any[]
+  `
 
   if (stores.length === 0) {
     notFound()
@@ -24,12 +45,12 @@ export default async function StoreDetailPage({ params }: Props) {
   const store = stores[0]
 
   // Get products for this store
-  const products = await prisma.$queryRaw`
+  const products = await prisma.$queryRaw<ProductResult[]>`
     SELECT id, "shopifyId", title, handle, status, image, price, "syncedAt"
     FROM "ShopifyProduct"
     WHERE "storeId" = ${id}
     ORDER BY "syncedAt" DESC NULLS LAST, "createdAt" DESC
-  ` as any[]
+  `
 
   return (
     <div className="space-y-6">
@@ -134,7 +155,7 @@ export default async function StoreDetailPage({ params }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {products.map((product: any) => (
+                {products.map((product) => (
                   <tr key={product.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
