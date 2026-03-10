@@ -22,6 +22,8 @@ export default async function EditSubscriptionProductPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  
+  // Fetch product and gateways in parallel
   const [product, gateways] = await Promise.all([
     getProduct(id),
     getGateways()
