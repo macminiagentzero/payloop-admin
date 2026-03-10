@@ -48,6 +48,7 @@ export async function PATCH(
     if (data.endpoint !== undefined) updateData.nmiEndpoint = data.endpoint
     if (data.securityKey !== undefined && data.securityKey !== '') updateData.nmiSecurityKey = data.securityKey
     if (data.merchantId !== undefined) updateData.nmiMerchantId = data.merchantId
+    if (data.monthlyCap !== undefined) updateData.monthlyCap = parseFloat(data.monthlyCap) || null
     if (data.isActive !== undefined) updateData.isActive = data.isActive
     if (data.isDefault !== undefined) {
       // If setting as default, unset others first

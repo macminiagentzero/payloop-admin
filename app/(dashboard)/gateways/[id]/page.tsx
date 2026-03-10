@@ -121,6 +121,24 @@ export default async function GatewayConfigPage({ params }: Props) {
                 placeholder="e.g., 500001750"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Monthly Cap (USD)
+              </label>
+              <input
+                type="number"
+                name="monthlyCap"
+                defaultValue={gateway.monthlyCap || ''}
+                step="0.01"
+                min="0"
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="e.g., 100000 for $100k/month"
+              />
+              <p className="mt-1 text-sm text-slate-500">
+                Maximum monthly processing volume for this MID
+              </p>
+            </div>
           </div>
 
           <div>

@@ -94,6 +94,7 @@ model PaymentGateway {
   nmiSecurityKey  String?
   nmiEndpoint     String?
   nmiMerchantId   String?
+  monthlyCap      Float?   // Monthly processing limit in USD
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
