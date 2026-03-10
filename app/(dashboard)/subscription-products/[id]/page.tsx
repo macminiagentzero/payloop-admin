@@ -202,6 +202,26 @@ export default async function EditSubscriptionProductPage({
             >
               Cancel
             </Link>
+            <form action={async () => {
+              'use server'
+              await prisma.subscriptionProduct.update({
+                where: { id },
+                data: { isActive: false }
+              })
+              redirect('/subscription-products')
+            }} className="ml-auto">
+              <button
+                type="submit"
+                className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+                onClick={(e) => {
+                  if (!confirm('Are you sure you want to delete this product?')) {
+                    e.preventDefault()
+                  }
+                }}
+              >
+                Delete Product
+              </button>
+            </form>
           </div>
         </form>
       </div>
