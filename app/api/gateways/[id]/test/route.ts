@@ -16,8 +16,6 @@ export async function POST(
       return NextResponse.json({ error: 'Gateway not found' }, { status: 404 })
     }
     
-    const gw = gateway[0]
-    
     // Test connection based on gateway type
     if (gateway.type === 'NMI' || gateway.type === 'nmi') {
       const endpoint = gateway.nmiEndpoint || 'https://seamlesschex.transactiongateway.com/api/transact.php'
