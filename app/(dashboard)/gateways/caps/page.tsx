@@ -18,7 +18,7 @@ async function getGatewayCaps() {
       createdAt: {
         gte: startOfMonth
       },
-      status: 'completed'
+      status: 'approved'
     },
     select: {
       gatewayId: true,
