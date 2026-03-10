@@ -30,11 +30,16 @@ export default async function OrderDetailPage({ params }: Props) {
   }
 
   // Get gateway info if gatewayId exists
-  const gateway = order.gatewayId 
-    ? await prisma.paymentGateway.findUnique({
-        where: { id: order.gatewayId },
-      })
-    : null
+  let gateway = null
+  if (order.gatewayId) {
+    // gatewayId might be a UUID or a name like 'nmi-rcdronez'
+    const isUuid = order.gatewayId.includes('-') && order.gatewayId.length > 20
+    gateway = await prisma.paymentGateway.findFirst({
+      where: isUuid 
+        ? { id: order.gatewayId }
+        : { name: order.gatewayId }
+    })
+  }
 
   // Get subscriptions for this customer
   const subscriptions = order.customerId 
