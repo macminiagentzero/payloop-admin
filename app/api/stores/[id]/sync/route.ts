@@ -8,6 +8,8 @@ interface Props {
 async function shopifyRequest(domain: string, accessToken: string, endpoint: string) {
   const url = `https://${domain}/admin/api/2024-01/${endpoint}`
   
+  console.log('Shopify API request:', url)
+  
   const response = await fetch(url, {
     headers: {
       'X-Shopify-Access-Token': accessToken,
@@ -16,6 +18,8 @@ async function shopifyRequest(domain: string, accessToken: string, endpoint: str
   })
 
   if (!response.ok) {
+    const text = await response.text()
+    console.error('Shopify API error:', response.status, text)
     throw new Error(`Shopify API error: ${response.status}`)
   }
 
@@ -48,12 +52,14 @@ export async function POST(request: NextRequest, { params }: Props) {
     }
 
     const store = stores[0]
+    console.log('Store found:', store.domain)
     await prisma.$disconnect()
 
-    // Fetch products from Shopify
-    const data = await shopifyRequest(store.accessToken, store.domain, 'products.json?limit=250')
+    // Fetch products from Shopify - correct parameter order: domain, accessToken, endpoint
+    const data = await shopifyRequest(store.domain, store.accessToken, 'products.json?limit=250')
     
     const products = data.products || []
+    console.log('Products fetched:', products.length)
     
     // Import prisma again for updates
     const { PrismaClient: PrismaClient2 } = await import('@prisma/client')
