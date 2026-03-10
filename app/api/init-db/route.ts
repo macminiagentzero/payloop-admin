@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// This endpoint initializes the Shopify tables
+// This endpoint initializes the database tables
 // Call it once after deployment: GET /api/init-db
 
 export async function GET() {
@@ -43,6 +43,22 @@ export async function GET() {
       )
     `
 
+    // Create PaymentGateway table
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "PaymentGateway" (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(255) NOT NULL UNIQUE,
+        "displayName" VARCHAR(255) NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        "apiKey" TEXT NOT NULL,
+        "apiSecret" TEXT,
+        "isActive" BOOLEAN DEFAULT true,
+        "isDefault" BOOLEAN DEFAULT false,
+        "createdAt" TIMESTAMP DEFAULT NOW(),
+        "updatedAt" TIMESTAMP DEFAULT NOW()
+      )
+    `
+
     // Create indexes
     await prisma.$executeRaw`
       CREATE INDEX IF NOT EXISTS idx_shopify_product_store ON "ShopifyProduct"("storeId")
@@ -52,9 +68,14 @@ export async function GET() {
       CREATE INDEX IF NOT EXISTS idx_shopify_store_domain ON "ShopifyStore"(domain)
     `
 
+    await prisma.$executeRaw`
+      CREATE INDEX IF NOT EXISTS idx_payment_gateway_type ON "PaymentGateway"(type)
+    `
+
     return NextResponse.json({ 
       success: true, 
-      message: 'Shopify tables created successfully' 
+      message: 'Database tables created successfully',
+      tables: ['ShopifyStore', 'ShopifyProduct', 'PaymentGateway']
     })
   } catch (error) {
     console.error('Init DB error:', error)
