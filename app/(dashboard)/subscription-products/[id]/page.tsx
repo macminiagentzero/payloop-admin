@@ -219,6 +219,7 @@ export default async function EditSubscriptionProductPage({
         </div>
       </div>
     </div>
+  )
   } catch (error) {
     console.error('Error loading edit page:', error)
     return (
