@@ -12,7 +12,6 @@ export async function POST(
   }
 
   const { id } = await params
-  const { id } = await params
   try {
     // Get gateway
     const gateway = await prisma.paymentGateway.findUnique({
