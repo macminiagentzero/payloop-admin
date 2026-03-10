@@ -13,6 +13,7 @@ export default async function OrderDetailPage({ params }: Props) {
     where: { id },
     include: {
       customer: true,
+      paymentMethod: true,
     },
   })
 
@@ -27,6 +28,13 @@ export default async function OrderDetailPage({ params }: Props) {
   } catch {
     items = []
   }
+
+  // Get gateway info if gatewayId exists
+  const gateway = order.gatewayId 
+    ? await prisma.paymentGateway.findUnique({
+        where: { id: order.gatewayId },
+      })
+    : null
 
   // Get subscriptions for this customer
   const subscriptions = order.customerId 
@@ -137,6 +145,21 @@ export default async function OrderDetailPage({ params }: Props) {
               <div>
                 <label className="text-xs text-slate-500 uppercase tracking-wider">Auth Code</label>
                 <p className="font-mono text-sm text-slate-900">{order.nmiAuthCode}</p>
+              </div>
+            )}
+            {gateway && (
+              <div className="pt-3 border-t border-slate-200">
+                <label className="text-xs text-slate-500 uppercase tracking-wider">Payment Gateway</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    {gateway.displayName || gateway.name}
+                  </span>
+                  {gateway.nmiMerchantId && (
+                    <span className="text-xs text-slate-500 font-mono">
+                      (MID: {gateway.nmiMerchantId})
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>
