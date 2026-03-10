@@ -8,25 +8,22 @@ export async function POST(
   const { id } = await params
   try {
     // Get gateway
-    const gateway = await prisma.$queryRaw<any[]>`
-      SELECT id, name, "nmiEndpoint", "nmiSecurityKey", type
-      FROM "PaymentGateway"
-      WHERE id = ${id}::uuid
-      LIMIT 1
-    `
+    const gateway = await prisma.paymentGateway.findUnique({
+      where: { id }
+    })
     
-    if (!gateway || gateway.length === 0) {
+    if (!gateway) {
       return NextResponse.json({ error: 'Gateway not found' }, { status: 404 })
     }
     
     const gw = gateway[0]
     
     // Test connection based on gateway type
-    if (gw.type === 'NMI' || gw.type === 'nmi') {
-      const endpoint = gw.nmiEndpoint || 'https://seamlesschex.transactiongateway.com/api/transact.php'
+    if (gateway.type === 'NMI' || gateway.type === 'nmi') {
+      const endpoint = gateway.nmiEndpoint || 'https://seamlesschex.transactiongateway.com/api/transact.php'
       
       const params = new URLSearchParams()
-      params.append('security_key', gw.nmiSecurityKey)
+      params.append('security_key', gateway.nmiSecurityKey || '')
       params.append('type', 'auth')
       params.append('amount', '1.00')
       params.append('ccnumber', '4111111111111111')

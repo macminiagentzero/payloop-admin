@@ -9,21 +9,23 @@ export async function GET(
     const { id } = await params
     console.log('Fetching gateway with id:', id)
     
-    // Use Prisma's findFirst with a typed where clause
-    const gateways = await prisma.$queryRaw<any[]>`
-      SELECT id, name, "displayName", type, "nmiEndpoint", "nmiMerchantId", "isActive", "isDefault", "createdAt"
-      FROM "PaymentGateway"
-      WHERE id = ${id}::uuid
-      LIMIT 1
-    `
+    const gateway = await prisma.paymentGateway.findUnique({
+      where: { id }
+    })
     
-    console.log('Gateway query result:', gateways)
+    console.log('Gateway query result:', gateway)
     
-    if (!gateways || gateways.length === 0) {
+    if (!gateway) {
       return NextResponse.json({ error: 'Gateway not found' }, { status: 404 })
     }
     
-    return NextResponse.json(gateways[0])
+    // Mask the security key
+    const maskedGateway = {
+      ...gateway,
+      nmiSecurityKey: gateway.nmiSecurityKey ? '••••••••' + gateway.nmiSecurityKey.slice(-4) : null
+    }
+    
+    return NextResponse.json(maskedGateway)
   } catch (error) {
     console.error('Get gateway error:', error)
     return NextResponse.json({ error: 'Failed to get gateway', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
@@ -38,64 +40,32 @@ export async function PATCH(
   try {
     const data = await request.json()
     
-    // Build dynamic update query
-    const updates: string[] = []
-    const values: any[] = []
-    let paramIndex = 1
+    const updateData: Record<string, unknown> = {}
     
-    if (data.name !== undefined) {
-      updates.push(`name = $${paramIndex++}`)
-      values.push(data.name)
-    }
-    if (data.displayName !== undefined) {
-      updates.push(`"displayName" = $${paramIndex++}`)
-      values.push(data.displayName)
-    }
-    if (data.type !== undefined) {
-      updates.push(`type = $${paramIndex++}`)
-      values.push(data.type)
-    }
-    if (data.endpoint !== undefined) {
-      updates.push(`"nmiEndpoint" = $${paramIndex++}`)
-      values.push(data.endpoint)
-    }
-    if (data.securityKey !== undefined && data.securityKey !== '') {
-      updates.push(`"nmiSecurityKey" = $${paramIndex++}`)
-      values.push(data.securityKey)
-    }
-    if (data.merchantId !== undefined) {
-      updates.push(`"nmiMerchantId" = $${paramIndex++}`)
-      values.push(data.merchantId)
-    }
-    if (data.isActive !== undefined) {
-      updates.push(`"isActive" = $${paramIndex++}`)
-      values.push(data.isActive)
-    }
+    if (data.name !== undefined) updateData.name = data.name
+    if (data.displayName !== undefined) updateData.displayName = data.displayName
+    if (data.type !== undefined) updateData.type = data.type
+    if (data.endpoint !== undefined) updateData.nmiEndpoint = data.endpoint
+    if (data.securityKey !== undefined && data.securityKey !== '') updateData.nmiSecurityKey = data.securityKey
+    if (data.merchantId !== undefined) updateData.nmiMerchantId = data.merchantId
+    if (data.isActive !== undefined) updateData.isActive = data.isActive
     if (data.isDefault !== undefined) {
       // If setting as default, unset others first
       if (data.isDefault) {
-        await prisma.$executeRaw`UPDATE "PaymentGateway" SET "isDefault" = false`
+        await prisma.paymentGateway.updateMany({
+          where: { isDefault: true },
+          data: { isDefault: false }
+        })
       }
-      updates.push(`"isDefault" = $${paramIndex++}`)
-      values.push(data.isDefault)
+      updateData.isDefault = data.isDefault
     }
     
-    if (updates.length === 0) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
-    }
+    const gateway = await prisma.paymentGateway.update({
+      where: { id },
+      data: updateData
+    })
     
-    values.push(id)
-    
-    const query = `
-      UPDATE "PaymentGateway"
-      SET ${updates.join(', ')}
-      WHERE id = $${paramIndex}::uuid
-      RETURNING id, name, "displayName", type, "nmiMerchantId", "isActive", "isDefault"
-    `
-    
-    const result = await prisma.$queryRawUnsafe<any[]>(query, ...values)
-    
-    return NextResponse.json(result[0])
+    return NextResponse.json(gateway)
   } catch (error) {
     console.error('Update gateway error:', error)
     return NextResponse.json({ error: 'Failed to update gateway' }, { status: 500 })
@@ -108,10 +78,9 @@ export async function DELETE(
 ) {
   const { id } = await params
   try {
-    await prisma.$executeRaw`
-      DELETE FROM "PaymentGateway"
-      WHERE id = ${id}::uuid
-    `
+    await prisma.paymentGateway.delete({
+      where: { id }
+    })
     
     return NextResponse.json({ success: true })
   } catch (error) {

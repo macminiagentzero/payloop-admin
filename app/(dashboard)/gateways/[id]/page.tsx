@@ -6,28 +6,12 @@ interface Props {
   params: Promise<{ id: string }>
 }
 
-interface GatewayResult {
-  id: string
-  name: string
-  displayName: string
-  type: string
-  nmiEndpoint: string | null
-  nmiSecurityKey: string | null
-  nmiMerchantId: string | null
-  isActive: boolean
-  isDefault: boolean
-  createdAt: Date
-}
-
-async function getGateway(id: string): Promise<GatewayResult | null> {
+async function getGateway(id: string) {
   try {
-    const gateway = await prisma.$queryRaw<GatewayResult[]>`
-      SELECT id, name, "displayName", type, "nmiEndpoint", "nmiSecurityKey", "nmiMerchantId", "isActive", "isDefault", "createdAt"
-      FROM "PaymentGateway"
-      WHERE id = ${id}::uuid
-      LIMIT 1
-    `
-    return gateway[0] || null
+    const gateway = await prisma.paymentGateway.findUnique({
+      where: { id }
+    })
+    return gateway
   } catch {
     return null
   }
