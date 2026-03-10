@@ -133,7 +133,7 @@ export default async function SubscriptionProductsPage() {
                           className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
                           onChange={(e) => {
                             // Auto-submit on change
-                            e.target.form.submit()
+                            e.target.form?.submit()
                           }}
                         >
                           <option value="">Not assigned</option>

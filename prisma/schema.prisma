@@ -156,3 +156,18 @@ model ShopifyProduct {
 
   @@unique([storeId, shopifyId])
 }
+
+// Subscription Products
+model SubscriptionProduct {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  description    String?
+  price          Float?   @default(0)
+  interval       String?   @default("month")
+  intervalCount  Int?      @default(1)
+  showOnCheckout Boolean?  @default(true)
+  gatewayId      String?   @db.Uuid
+  isActive       Boolean?  @default(true)
+  createdAt      DateTime? @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime? @default(now()) @db.Timestamp(6)
+}
