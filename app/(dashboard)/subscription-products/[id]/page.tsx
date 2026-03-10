@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
-import { DeleteProductButton } from '@/components/DeleteProductButton'
 
 async function getProduct(id: string) {
   return prisma.subscriptionProduct.findUnique({
@@ -205,9 +204,7 @@ export default async function EditSubscriptionProductPage({
             >
               Cancel
             </Link>
-            <div className="ml-auto">
-              <DeleteProductButton productId={id} />
-            </div>
+            {/* Delete button removed for testing */}
           </div>
         </form>
       </div>
