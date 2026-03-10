@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     // Calculate date range
     const now = new Date()
     let startDate: Date
+    let endDate: Date = now
     
     switch (range) {
       case 'today':
@@ -16,8 +17,7 @@ export async function GET(request: NextRequest) {
         break
       case 'yesterday':
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1)
-        now.setDate(now.getDate() - 1)
-        now.setHours(23, 59, 59, 999)
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999)
         break
       case '7days':
         startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         break
       case 'lastMonth':
         startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        now = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999)
         break
       case 'all':
       default:
@@ -53,24 +53,24 @@ export async function GET(request: NextRequest) {
       prisma.order.aggregate({
         _sum: { total: true },
         where: {
-          createdAt: { gte: startDate, lte: now },
+          createdAt: { gte: startDate, lte: endDate },
           status: 'approved'
         }
       }),
       
       // Total orders in range
       prisma.order.count({
-        where: { createdAt: { gte: startDate, lte: now } }
+        where: { createdAt: { gte: startDate, lte: endDate } }
       }),
       
       // Approved orders in range
       prisma.order.count({
-        where: { createdAt: { gte: startDate, lte: now }, status: 'approved' }
+        where: { createdAt: { gte: startDate, lte: endDate }, status: 'approved' }
       }),
       
       // Declined orders in range
       prisma.order.count({
-        where: { createdAt: { gte: startDate, lte: now }, status: 'declined' }
+        where: { createdAt: { gte: startDate, lte: endDate }, status: 'declined' }
       }),
       
       // Total customers (all time)
@@ -84,13 +84,13 @@ export async function GET(request: NextRequest) {
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: { customer: true },
-        where: { createdAt: { gte: startDate, lte: now } }
+        where: { createdAt: { gte: startDate, lte: endDate } }
       }),
       
       // Chart data - group by day
       prisma.order.findMany({
         where: {
-          createdAt: { gte: startDate, lte: now },
+          createdAt: { gte: startDate, lte: endDate },
           status: 'approved'
         },
         select: {
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
     // Fill in missing dates
     const chartDates: { date: string; total: number }[] = []
     const current = new Date(startDate)
-    while (current <= now) {
+    while (current <= endDate) {
       const dateStr = current.toISOString().split('T')[0]
       chartDates.push({
         date: dateStr,
