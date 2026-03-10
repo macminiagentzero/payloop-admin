@@ -7,12 +7,16 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    console.log('Fetching gateway with id:', id)
+    
     const gateway = await prisma.$queryRaw<any[]>`
       SELECT id, name, "displayName", type, "nmiEndpoint", "nmiMerchantId", "isActive", "isDefault", "createdAt"
       FROM "PaymentGateway"
       WHERE id = ${id}
       LIMIT 1
     `
+    
+    console.log('Gateway query result:', gateway)
     
     if (!gateway || gateway.length === 0) {
       return NextResponse.json({ error: 'Gateway not found' }, { status: 404 })
@@ -21,7 +25,7 @@ export async function GET(
     return NextResponse.json(gateway[0])
   } catch (error) {
     console.error('Get gateway error:', error)
-    return NextResponse.json({ error: 'Failed to get gateway' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to get gateway', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
   }
 }
 
