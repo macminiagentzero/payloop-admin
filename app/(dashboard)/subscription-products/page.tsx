@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { GatewaySelect } from '@/components/GatewaySelect'
 
 async function getSubscriptionProducts() {
   const products = await prisma.subscriptionProduct.findMany({
@@ -126,24 +127,11 @@ export default async function SubscriptionProductsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <form id={`gateway-form-${product.id}`} action={`/api/subscription-products/${product.id}/gateway`} method="POST">
-                        <select
-                          name="gatewayId"
-                          defaultValue={product.gatewayId || ''}
-                          className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                          onChange={(e) => {
-                            // Auto-submit on change
-                            e.target.form?.submit()
-                          }}
-                        >
-                          <option value="">Not assigned</option>
-                          {gateways.map(gw => (
-                            <option key={gw.id} value={gw.id}>
-                              {gw.displayName || gw.name} {gw.isDefault ? '(Default)' : ''}
-                            </option>
-                          ))}
-                        </select>
-                      </form>
+                      <GatewaySelect
+                        productId={product.id}
+                        gatewayId={product.gatewayId}
+                        gateways={gateways}
+                      />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <Link
