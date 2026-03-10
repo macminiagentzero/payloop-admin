@@ -9,20 +9,21 @@ export async function GET(
     const { id } = await params
     console.log('Fetching gateway with id:', id)
     
-    const gateway = await prisma.$queryRaw<any[]>`
+    // Use Prisma's findFirst with a typed where clause
+    const gateways = await prisma.$queryRaw<any[]>`
       SELECT id, name, "displayName", type, "nmiEndpoint", "nmiMerchantId", "isActive", "isDefault", "createdAt"
       FROM "PaymentGateway"
-      WHERE id = ${id}
+      WHERE id = ${id}::uuid
       LIMIT 1
     `
     
-    console.log('Gateway query result:', gateway)
+    console.log('Gateway query result:', gateways)
     
-    if (!gateway || gateway.length === 0) {
+    if (!gateways || gateways.length === 0) {
       return NextResponse.json({ error: 'Gateway not found' }, { status: 404 })
     }
     
-    return NextResponse.json(gateway[0])
+    return NextResponse.json(gateways[0])
   } catch (error) {
     console.error('Get gateway error:', error)
     return NextResponse.json({ error: 'Failed to get gateway', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 })
@@ -88,7 +89,7 @@ export async function PATCH(
     const query = `
       UPDATE "PaymentGateway"
       SET ${updates.join(', ')}
-      WHERE id = $${paramIndex}
+      WHERE id = $${paramIndex}::uuid
       RETURNING id, name, "displayName", type, "nmiMerchantId", "isActive", "isDefault"
     `
     
@@ -109,7 +110,7 @@ export async function DELETE(
   try {
     await prisma.$executeRaw`
       DELETE FROM "PaymentGateway"
-      WHERE id = ${id}
+      WHERE id = ${id}::uuid
     `
     
     return NextResponse.json({ success: true })

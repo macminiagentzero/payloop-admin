@@ -24,7 +24,7 @@ async function getGateway(id: string): Promise<GatewayResult | null> {
     const gateway = await prisma.$queryRaw<GatewayResult[]>`
       SELECT id, name, "displayName", type, "nmiEndpoint", "nmiSecurityKey", "nmiMerchantId", "isActive", "isDefault", "createdAt"
       FROM "PaymentGateway"
-      WHERE id = ${id}
+      WHERE id = ${id}::uuid
       LIMIT 1
     `
     return gateway[0] || null

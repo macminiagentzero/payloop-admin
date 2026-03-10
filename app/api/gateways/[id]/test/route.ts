@@ -11,7 +11,7 @@ export async function POST(
     const gateway = await prisma.$queryRaw<any[]>`
       SELECT id, name, "nmiEndpoint", "nmiSecurityKey", type
       FROM "PaymentGateway"
-      WHERE id = ${id}
+      WHERE id = ${id}::uuid
       LIMIT 1
     `
     
