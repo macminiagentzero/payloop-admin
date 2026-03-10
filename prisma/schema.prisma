@@ -111,3 +111,47 @@ model Subscription {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+// Shopify Stores
+model ShopifyStore {
+  id              String   @id @default(uuid())
+  name            String
+  domain          String   @unique
+  accessToken     String
+  isActive        Boolean  @default(true)
+  
+  lastSyncAt      DateTime?
+  productCount    Int      @default(0)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  products        ShopifyProduct[]
+}
+
+// Shopify Products
+model ShopifyProduct {
+  id              String   @id @default(uuid())
+  storeId         String
+  store           ShopifyStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  
+  shopifyId       String   @unique
+  title           String
+  handle          String?
+  productType     String?
+  vendor          String?
+  status          String   @default("active")
+  
+  image           String?
+  price          Float?
+  compareAtPrice Float?
+  
+  variants        String?  // JSON string of variants
+  
+  syncedAt       DateTime?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([storeId, shopifyId])
+}
