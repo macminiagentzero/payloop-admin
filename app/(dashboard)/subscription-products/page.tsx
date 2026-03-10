@@ -130,7 +130,12 @@ export default async function SubscriptionProductsPage() {
                       <GatewaySelect
                         productId={product.id}
                         gatewayId={product.gatewayId}
-                        gateways={gateways}
+                        gateways={gateways.map(gw => ({
+                          id: gw.id,
+                          name: gw.name,
+                          displayName: gw.displayName,
+                          isDefault: gw.isDefault
+                        }))}
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
