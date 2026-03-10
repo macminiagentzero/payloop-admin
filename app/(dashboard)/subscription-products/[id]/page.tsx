@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import { DeleteProductButton } from '@/components/DeleteProductButton'
 
 async function getProduct(id: string) {
   return prisma.subscriptionProduct.findUnique({
@@ -20,17 +21,18 @@ export default async function EditSubscriptionProductPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const { id } = await params
-  
-  // Fetch product and gateways in parallel
-  const [product, gateways] = await Promise.all([
-    getProduct(id),
-    getGateways()
-  ])
+  try {
+    const { id } = await params
+    
+    // Fetch product and gateways in parallel
+    const [product, gateways] = await Promise.all([
+      getProduct(id),
+      getGateways()
+    ])
 
-  if (!product) {
-    notFound()
-  }
+    if (!product) {
+      notFound()
+    }
 
   return (
     <div className="space-y-6">
@@ -204,10 +206,29 @@ export default async function EditSubscriptionProductPage({
             >
               Cancel
             </Link>
-            {/* Delete button removed for testing */}
           </div>
         </form>
+
+        {/* Delete Section */}
+        <div className="mt-8 pt-6 border-t border-slate-200">
+          <h3 className="text-sm font-medium text-slate-900 mb-2">Danger Zone</h3>
+          <p className="text-sm text-slate-500 mb-4">
+            Deleting this product will remove it from the subscription products list.
+          </p>
+          <DeleteProductButton productId={id} />
+        </div>
       </div>
     </div>
-  )
+  } catch (error) {
+    console.error('Error loading edit page:', error)
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold text-red-600">Error Loading Product</h1>
+        <p className="text-slate-600 mt-2">There was an error loading this product. Please try again.</p>
+        <Link href="/subscription-products" className="text-indigo-600 hover:text-indigo-700 mt-4 inline-block">
+          ← Back to Products
+        </Link>
+      </div>
+    )
+  }
 }
