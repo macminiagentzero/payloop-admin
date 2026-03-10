@@ -1,21 +1,25 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@mellone.co'
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'PayLoop2024!'
-const AUTH_SECRET = process.env.AUTH_SECRET || 'payloop-admin-secret'
+// Read environment variables at request time, not at build time
+function getEnvVar(name: string, defaultValue: string): string {
+  // In Next.js, process.env is available at runtime on the server
+  return process.env[name] || defaultValue
+}
 
 // Simple token generation
 export function generateToken(): string {
-  return Buffer.from(`${Date.now()}:${AUTH_SECRET}`).toString('base64')
+  const authSecret = getEnvVar('AUTH_SECRET', 'payloop-admin-secret')
+  return Buffer.from(`${Date.now()}:${authSecret}`).toString('base64')
 }
 
 // Verify token
 export function verifyToken(token: string): boolean {
   try {
+    const authSecret = getEnvVar('AUTH_SECRET', 'payloop-admin-secret')
     const decoded = Buffer.from(token, 'base64').toString()
     const [timestamp, secret] = decoded.split(':')
-    return secret === AUTH_SECRET && parseInt(timestamp) > Date.now() - 24 * 60 * 60 * 1000 // 24h expiry
+    return secret === authSecret && parseInt(timestamp) > Date.now() - 24 * 60 * 60 * 1000
   } catch {
     return false
   }
@@ -23,7 +27,16 @@ export function verifyToken(token: string): boolean {
 
 // Check credentials
 export function checkCredentials(email: string, password: string): boolean {
-  return email === ADMIN_EMAIL && password === ADMIN_PASSWORD
+  const adminEmail = getEnvVar('ADMIN_EMAIL', 'admin@mellone.co')
+  const adminPassword = getEnvVar('ADMIN_PASSWORD', 'PayLoop2024!')
+  
+  console.log('Checking credentials:', { 
+    providedEmail: email, 
+    adminEmail,
+    passwordMatch: password === adminPassword 
+  })
+  
+  return email === adminEmail && password === adminPassword
 }
 
 // Server-side auth check
@@ -35,5 +48,6 @@ export async function requireAuth() {
     redirect('/login')
   }
   
-  return { email: ADMIN_EMAIL }
+  const adminEmail = getEnvVar('ADMIN_EMAIL', 'admin@mellone.co')
+  return { email: adminEmail }
 }

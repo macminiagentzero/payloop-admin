@@ -5,6 +5,14 @@ export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
 
+    // Debug logging
+    console.log('Login attempt:', { 
+      email, 
+      passwordProvided: !!password,
+      envEmail: process.env.ADMIN_EMAIL,
+      envPasswordSet: !!process.env.ADMIN_PASSWORD
+    })
+
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password required' },
@@ -13,12 +21,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!checkCredentials(email, password)) {
+      console.log('Credentials check failed')
       return NextResponse.json(
         { error: 'Invalid credentials' },
         { status: 401 }
       )
     }
 
+    console.log('Login successful')
     const token = generateToken()
     
     const response = NextResponse.json({ 
