@@ -10,9 +10,6 @@ COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 RUN npm ci
 
-# Generate Prisma Client
-RUN npx prisma generate
-
 # Rebuild the source code only when needed
 FROM base AS builder
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
@@ -22,6 +19,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
+
+# Generate Prisma Client for the target platform
+RUN npx prisma generate
 
 RUN npm run build
 
@@ -39,8 +39,9 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/prisma ./prisma
 
 USER nextjs
 
