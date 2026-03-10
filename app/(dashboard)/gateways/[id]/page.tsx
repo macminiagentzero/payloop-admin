@@ -29,8 +29,9 @@ async function getGateway(id: string): Promise<GatewayResult | null> {
   }
 }
 
-export default async function GatewayConfigPage({ params }: { params: { id: string } }) {
-  const gateway = await getGateway(params.id)
+export default async function GatewayConfigPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  const gateway = await getGateway(id)
   
   if (!gateway) {
     notFound()
