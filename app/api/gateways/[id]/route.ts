@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isAuthenticated } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { id } = await params
     console.log('Fetching gateway with id:', id)
@@ -36,6 +42,11 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { id } = await params
   try {
     const data = await request.json()
@@ -77,6 +88,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { id } = await params
   try {
     await prisma.paymentGateway.delete({

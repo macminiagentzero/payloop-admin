@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isAuthenticated } from '@/lib/auth'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -33,6 +34,11 @@ interface StoreResult {
 }
 
 export async function POST(request: NextRequest, { params }: Props) {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { id } = await params
 
   try {

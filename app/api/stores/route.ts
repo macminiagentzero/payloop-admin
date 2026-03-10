@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isAuthenticated } from '@/lib/auth'
 
 interface StoreResult {
   id: string
@@ -12,6 +13,11 @@ interface StoreResult {
 }
 
 export async function GET() {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const stores = await prisma.$queryRaw<StoreResult[]>`
       SELECT id, name, domain, "isActive", "lastSyncAt", "productCount", "createdAt"
@@ -26,6 +32,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { name, domain, accessToken } = await request.json()
 

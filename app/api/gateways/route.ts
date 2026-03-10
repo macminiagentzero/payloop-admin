@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isAuthenticated } from '@/lib/auth'
 
 // GET - List all gateways
 export async function GET() {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const gateways = await prisma.$queryRaw`
       SELECT id, name, "displayName", type, "isActive", "isDefault", "createdAt"
@@ -18,6 +24,11 @@ export async function GET() {
 
 // POST - Create new gateway
 export async function POST(request: NextRequest) {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const body = await request.json()
     const { name, displayName, type, apiKey, apiSecret, isActive, isDefault } = body

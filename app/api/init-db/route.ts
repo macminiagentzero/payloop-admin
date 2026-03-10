@@ -1,10 +1,16 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isAuthenticated } from '@/lib/auth'
 
 // This endpoint initializes the database tables
 // Call it once after deployment: GET /api/init-db
 
 export async function GET() {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     // Create ShopifyStore table
     await prisma.$executeRaw`

@@ -39,7 +39,7 @@ export function checkCredentials(email: string, password: string): boolean {
   return email === adminEmail && password === adminPassword
 }
 
-// Server-side auth check
+// Server-side auth check (for pages - redirects to login)
 export async function requireAuth() {
   const cookieStore = await cookies()
   const token = cookieStore.get('auth_token')?.value
@@ -50,4 +50,27 @@ export async function requireAuth() {
   
   const adminEmail = getEnvVar('ADMIN_EMAIL', 'admin@mellone.co')
   return { email: adminEmail }
+}
+
+// API auth check (returns null if unauthorized, user info if authorized)
+export async function getAuthUser(): Promise<{ email: string } | null> {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('auth_token')?.value
+    
+    if (!token || !verifyToken(token)) {
+      return null
+    }
+    
+    const adminEmail = getEnvVar('ADMIN_EMAIL', 'admin@mellone.co')
+    return { email: adminEmail }
+  } catch {
+    return null
+  }
+}
+
+// Check if request is authenticated (for API routes)
+export async function isAuthenticated(): Promise<boolean> {
+  const user = await getAuthUser()
+  return user !== null
 }
