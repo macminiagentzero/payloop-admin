@@ -31,11 +31,11 @@ interface ProductResult {
 export default async function StoreDetailPage({ params }: Props) {
   const { id } = await params
 
-  // Get store details
+  // Get store details - cast UUID properly
   const stores = await prisma.$queryRaw<StoreResult[]>`
     SELECT id, name, domain, "isActive", "lastSyncAt", "productCount", "createdAt"
     FROM "ShopifyStore"
-    WHERE id = ${id}
+    WHERE id = ${id}::uuid
   `
 
   if (stores.length === 0) {
@@ -44,11 +44,11 @@ export default async function StoreDetailPage({ params }: Props) {
 
   const store = stores[0]
 
-  // Get products for this store
+  // Get products for this store - cast UUID properly
   const products = await prisma.$queryRaw<ProductResult[]>`
     SELECT id, "shopifyId", title, handle, status, image, price, "syncedAt"
     FROM "ShopifyProduct"
-    WHERE "storeId" = ${id}
+    WHERE "storeId" = ${id}::uuid
     ORDER BY "syncedAt" DESC NULLS LAST, "createdAt" DESC
   `
 
