@@ -22,21 +22,28 @@ async function shopifyRequest(domain: string, accessToken: string, endpoint: str
   return response.json()
 }
 
+interface StoreResult {
+  id: string
+  domain: string
+  accessToken: string
+}
+
 export async function POST(request: NextRequest, { params }: Props) {
   const { id } = await params
 
   try {
-    // Get store from database
+    // Get store from database - cast UUID properly
     const { PrismaClient } = await import('@prisma/client')
     const prisma = new PrismaClient()
 
-    const stores = await prisma.$queryRaw`
+    const stores = await prisma.$queryRaw<StoreResult[]>`
       SELECT id, domain, "accessToken"
       FROM "ShopifyStore"
-      WHERE id = ${id}
-    ` as any[]
+      WHERE id = ${id}::uuid
+    `
 
     if (stores.length === 0) {
+      await prisma.$disconnect()
       return NextResponse.json({ error: 'Store not found' }, { status: 404 })
     }
 
@@ -44,7 +51,7 @@ export async function POST(request: NextRequest, { params }: Props) {
     await prisma.$disconnect()
 
     // Fetch products from Shopify
-    const data = await shopifyRequest(store.domain, store.accessToken, 'products.json?limit=250')
+    const data = await shopifyRequest(store.accessToken, store.domain, 'products.json?limit=250')
     
     const products = data.products || []
     
@@ -52,7 +59,7 @@ export async function POST(request: NextRequest, { params }: Props) {
     const { PrismaClient: PrismaClient2 } = await import('@prisma/client')
     const prisma2 = new PrismaClient2()
 
-    // Upsert each product
+    // Upsert each product - cast UUID properly
     for (const product of products) {
       const image = product.images?.[0]?.src || null
       const variant = product.variants?.[0]
@@ -60,7 +67,7 @@ export async function POST(request: NextRequest, { params }: Props) {
 
       await prisma2.$executeRaw`
         INSERT INTO "ShopifyProduct" (id, "storeId", "shopifyId", title, handle, status, image, price, "syncedAt", "createdAt", "updatedAt")
-        VALUES (gen_random_uuid(), ${id}, ${String(product.id)}, ${product.title}, ${product.handle}, ${product.status}, ${image}, ${price}, NOW(), NOW(), NOW())
+        VALUES (gen_random_uuid(), ${id}::uuid, ${String(product.id)}, ${product.title}, ${product.handle}, ${product.status}, ${image}, ${price}, NOW(), NOW(), NOW())
         ON CONFLICT ("storeId", "shopifyId") 
         DO UPDATE SET 
           title = ${product.title}, 
@@ -72,11 +79,11 @@ export async function POST(request: NextRequest, { params }: Props) {
       `
     }
 
-    // Update store with sync time and product count
+    // Update store with sync time and product count - cast UUID properly
     await prisma2.$executeRaw`
       UPDATE "ShopifyStore"
       SET "lastSyncAt" = NOW(), "productCount" = ${products.length}, "updatedAt" = NOW()
-      WHERE id = ${id}
+      WHERE id = ${id}::uuid
     `
 
     await prisma2.$disconnect()
