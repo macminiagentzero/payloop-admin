@@ -3,14 +3,15 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     // Get gateway
     const gateway = await prisma.$queryRaw<any[]>`
       SELECT id, name, "nmiEndpoint", "nmiSecurityKey", type
       FROM "PaymentGateway"
-      WHERE id = ${params.id}
+      WHERE id = ${id}
       LIMIT 1
     `
     

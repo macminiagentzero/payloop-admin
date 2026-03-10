@@ -3,13 +3,14 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const gateway = await prisma.$queryRaw<any[]>`
       SELECT id, name, "displayName", type, "nmiEndpoint", "nmiMerchantId", "isActive", "isDefault", "createdAt"
       FROM "PaymentGateway"
-      WHERE id = ${params.id}
+      WHERE id = ${id}
       LIMIT 1
     `
     
@@ -26,8 +27,9 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     const data = await request.json()
     
@@ -77,7 +79,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
     }
     
-    values.push(params.id)
+    values.push(id)
     
     const query = `
       UPDATE "PaymentGateway"
@@ -97,12 +99,13 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
     await prisma.$executeRaw`
       DELETE FROM "PaymentGateway"
-      WHERE id = ${params.id}
+      WHERE id = ${id}
     `
     
     return NextResponse.json({ success: true })
