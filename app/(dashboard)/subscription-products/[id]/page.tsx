@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import { DeleteProductButton } from '@/components/DeleteProductButton'
 
 async function getProduct(id: string) {
   return prisma.subscriptionProduct.findUnique({
@@ -202,26 +203,9 @@ export default async function EditSubscriptionProductPage({
             >
               Cancel
             </Link>
-            <form action={async () => {
-              'use server'
-              await prisma.subscriptionProduct.update({
-                where: { id },
-                data: { isActive: false }
-              })
-              redirect('/subscription-products')
-            }} className="ml-auto">
-              <button
-                type="submit"
-                className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
-                onClick={(e) => {
-                  if (!confirm('Are you sure you want to delete this product?')) {
-                    e.preventDefault()
-                  }
-                }}
-              >
-                Delete Product
-              </button>
-            </form>
+            <div className="ml-auto">
+              <DeleteProductButton productId={id} />
+            </div>
           </div>
         </form>
       </div>
