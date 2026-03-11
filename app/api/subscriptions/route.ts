@@ -9,8 +9,8 @@ export async function GET() {
   }
 
   try {
-    // Use $queryRaw to avoid Prisma client errors when schema columns don't exist yet
-    // This is a temporary solution until the database schema is migrated
+    // Use raw SQL to avoid Prisma client errors when new schema columns don't exist yet
+    // Only select columns that exist in the current database
     const subscriptions = await prisma.$queryRaw`
       SELECT 
         s.id, 
@@ -18,45 +18,30 @@ export async function GET() {
         s.name, 
         s.status, 
         s."createdAt", 
-        s."updatedAt",
-        c.id as "customer_id",
-        c.email as "customer_email",
-        c."firstName" as "customer_firstName",
-        c."lastName" as "customer_lastName",
-        c.phone as "customer_phone",
-        c.address as "customer_address",
-        c.city as "customer_city",
-        c.state as "customer_state",
-        c.zip as "customer_zip",
-        c.country as "customer_country"
+        s."updatedAt"
       FROM "Subscription" s
-      LEFT JOIN "Customer" c ON s."customerId" = c.id
       ORDER BY s."createdAt" DESC
     ` as any[]
     
-    // Transform the results to match the expected format
-    const formatted = subscriptions.map(s => ({
+    // Get customer data for each subscription
+    const customerIds = [...new Set(subscriptions.map(s => s.customerId))]
+    const customers = await prisma.customer.findMany({
+      where: { id: { in: customerIds } }
+    })
+    const customerMap = new Map(customers.map(c => [c.id, c]))
+    
+    // Combine the data
+    const result = subscriptions.map(s => ({
       id: s.id,
       customerId: s.customerId,
       name: s.name,
       status: s.status,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
-      customer: {
-        id: s.customer_id,
-        email: s.customer_email,
-        firstName: s.customer_firstName,
-        lastName: s.customer_lastName,
-        phone: s.customer_phone,
-        address: s.customer_address,
-        city: s.customer_city,
-        state: s.customer_state,
-        zip: s.customer_zip,
-        country: s.customer_country,
-      }
+      customer: customerMap.get(s.customerId) || null
     }))
 
-    return NextResponse.json(formatted)
+    return NextResponse.json(result)
   } catch (error) {
     console.error('Subscriptions error:', error)
     return NextResponse.json(
