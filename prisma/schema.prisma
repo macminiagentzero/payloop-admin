@@ -80,8 +80,6 @@ model Order {
   
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  
-  subscriptions   Subscription[]
 }
 
 // Payment gateways
@@ -102,29 +100,15 @@ model PaymentGateway {
   updatedAt       DateTime @updatedAt
 }
 
-// Subscriptions - full schema matching checkout service
+// Subscriptions - minimal fields that exist in DB
+// TODO: Add full schema columns after running migration
 model Subscription {
   id              String   @id @default(uuid())
   customerId      String
   customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   
-  orderId         String?  // Link to initial order
-  order           Order?   @relation(fields: [orderId], references: [id])
-  
-  name            String   // Subscription name
-  price           Float    @default(0)  // Monthly price
-  
-  // Token for rebills (Spreedly or NMI vault)
-  gatewayId       String?  // Which gateway to use for rebills
-  nmiVaultId      String?  // Legacy NMI vault ID
-  spreedlyToken   String?  // Spreedly payment method token
-  
-  status          String   @default("active") // active, paused, cancelled
-  
-  billingDay      Int      @default(1) // Day of month to bill
-  nextBillDate    DateTime?
-  lastBillDate    DateTime?
-  totalBills      Int      @default(0)
+  name            String
+  status          String   @default("active")
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -187,13 +171,4 @@ model SubscriptionProduct {
   isActive       Boolean?  @default(true)
   createdAt      DateTime? @default(now()) @db.Timestamp(6)
   updatedAt      DateTime? @default(now()) @db.Timestamp(6)
-}
-
-// Settings
-model Setting {
-  id              String   @id @default(uuid())
-  key             String   @unique
-  value           String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
 }
