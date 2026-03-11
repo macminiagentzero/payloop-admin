@@ -3,24 +3,14 @@
 import { useState, useEffect } from 'react'
 import DateRangePicker from './DateRangePicker'
 import OrdersTable from './OrdersTable'
+import { Order, Customer } from '@prisma/client'
 
-interface Order {
-  id: string
-  customerId: string
-  amount: number
-  status: string
-  transactionId: string | null
-  createdAt: string
-  customer: {
-    id: string
-    email: string
-    firstName: string | null
-    lastName: string | null
-  } | null
+interface OrderWithCustomer extends Order {
+  customer: Customer | null
 }
 
 export default function OrdersClient() {
-  const [orders, setOrders] = useState<Order[]>([])
+  const [orders, setOrders] = useState<OrderWithCustomer[]>([])
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState('7days')
 
