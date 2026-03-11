@@ -75,7 +75,12 @@ export default function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <span className="text-white text-sm font-bold">P</span>
+              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="8" strokeLinecap="round" />
+                <path d="M12 8v4l2 2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M16 4l2 2-2 2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8 20l-2-2 2-2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
             <span className="font-bold text-slate-900">PayLoop</span>
           </div>
@@ -115,7 +120,12 @@ export default function Sidebar() {
           {/* Logo */}
           <div className="flex items-center gap-3 px-5 py-5 border-b border-slate-800">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <span className="text-white text-lg font-bold">P</span>
+              <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="8" strokeLinecap="round" />
+                <path d="M12 8v4l2 2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M16 4l2 2-2 2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M8 20l-2-2 2-2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             </div>
             <div>
               <h1 className="text-lg font-bold text-white">PayLoop</h1>
