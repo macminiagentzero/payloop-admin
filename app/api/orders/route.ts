@@ -48,8 +48,26 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const range = searchParams.get('range') || '7days'
+    const startDateParam = searchParams.get('startDate')
+    const endDateParam = searchParams.get('endDate')
     
-    const { startDate, endDate } = getDateRange(range)
+    let startDate: Date
+    let endDate: Date
+    
+    // Support custom date range
+    if (startDateParam && endDateParam) {
+      startDate = new Date(startDateParam)
+      // Set start to beginning of day
+      startDate.setHours(0, 0, 0, 0)
+      
+      endDate = new Date(endDateParam)
+      // Set end to end of day
+      endDate.setHours(23, 59, 59, 999)
+    } else {
+      const rangeDates = getDateRange(range)
+      startDate = rangeDates.startDate
+      endDate = rangeDates.endDate
+    }
 
     const orders = await prisma.order.findMany({
       where: {

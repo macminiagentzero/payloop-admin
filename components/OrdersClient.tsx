@@ -13,15 +13,23 @@ export default function OrdersClient() {
   const [orders, setOrders] = useState<OrderWithCustomer[]>([])
   const [loading, setLoading] = useState(true)
   const [dateRange, setDateRange] = useState('7days')
+  const [customStartDate, setCustomStartDate] = useState<string | undefined>()
+  const [customEndDate, setCustomEndDate] = useState<string | undefined>()
 
   useEffect(() => {
     fetchOrders()
-  }, [dateRange])
+  }, [dateRange, customStartDate, customEndDate])
 
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/orders?range=${dateRange}`)
+      let url = `/api/orders?range=${dateRange}`
+      
+      if (dateRange === 'custom' && customStartDate && customEndDate) {
+        url = `/api/orders?startDate=${customStartDate}&endDate=${customEndDate}`
+      }
+      
+      const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
         setOrders(data)
@@ -33,6 +41,17 @@ export default function OrdersClient() {
     }
   }
 
+  const handleDateChange = (value: string, startDate?: string, endDate?: string) => {
+    setDateRange(value)
+    if (value === 'custom' && startDate && endDate) {
+      setCustomStartDate(startDate)
+      setCustomEndDate(endDate)
+    } else {
+      setCustomStartDate(undefined)
+      setCustomEndDate(undefined)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -40,7 +59,12 @@ export default function OrdersClient() {
           <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
           <p className="text-slate-500 mt-1">Manage all orders and transactions</p>
         </div>
-        <DateRangePicker value={dateRange} onChange={setDateRange} />
+        <DateRangePicker 
+          value={dateRange} 
+          onChange={handleDateChange}
+          customStartDate={customStartDate}
+          customEndDate={customEndDate}
+        />
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
