@@ -1,15 +1,63 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isAuthenticated } from '@/lib/auth'
 
-export async function GET() {
+function getDateRange(range: string): { startDate: Date; endDate: Date } {
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  
+  switch (range) {
+    case 'today':
+      return { startDate: today, endDate: now }
+    case 'yesterday': {
+      const yesterday = new Date(today)
+      yesterday.setDate(yesterday.getDate() - 1)
+      return { startDate: yesterday, endDate: today }
+    }
+    case '7days': {
+      const startDate = new Date(today)
+      startDate.setDate(startDate.getDate() - 7)
+      return { startDate, endDate: now }
+    }
+    case '30days': {
+      const startDate = new Date(today)
+      startDate.setDate(startDate.getDate() - 30)
+      return { startDate, endDate: now }
+    }
+    case 'thisMonth': {
+      const startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+      return { startDate, endDate: now }
+    }
+    case 'lastMonth': {
+      const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const endDate = new Date(now.getFullYear(), now.getMonth(), 1)
+      return { startDate, endDate }
+    }
+    case 'all':
+    default:
+      return { startDate: new Date('2020-01-01'), endDate: now }
+  }
+}
+
+export async function GET(request: NextRequest) {
   // Auth check
   if (!await isAuthenticated()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
+    const { searchParams } = new URL(request.url)
+    const range = searchParams.get('range') || '7days'
+    
+    const { startDate, endDate } = getDateRange(range)
+
     const orders = await prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
       orderBy: { createdAt: 'desc' },
       include: { customer: true },
     })
