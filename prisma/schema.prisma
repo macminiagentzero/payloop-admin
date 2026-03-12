@@ -1,7 +1,6 @@
-// PayLoop Dashboard - Same database as checkout (exact match)
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  binaryTargets   = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -35,8 +34,10 @@ model PaymentMethod {
   customerId     String
   customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   
-  nmiVaultId     String?  @unique
-  basisTheoryTokenId String? @unique
+  nmiVaultId     String?  @unique // NMI Customer Vault ID
+  
+  // Basis Theory token for card vaulting
+  basisTheoryTokenId String? @unique // Basis Theory token ID
   
   cardLast4      String
   cardType       String
@@ -62,6 +63,7 @@ model Order {
   
   gatewayId       String?
   
+  // Order details
   type            String   @default("initial")
   
   subtotal        Float    @default(0)
@@ -70,11 +72,11 @@ model Order {
   total           Float
   currency        String   @default("USD")
   
-  items           String
+  items           String   // JSON string
   
   nmiTransactionId String?  @unique
   nmiAuthCode      String?
-  nmiResponse      String?
+  nmiResponse      String?  // JSON string
   
   status          String   @default("pending")
   errorMessage    String?
@@ -90,10 +92,11 @@ model PaymentGateway {
   id              String   @id @default(uuid())
   name            String   @unique
   displayName     String
-  type            String
+  type            String   // nmi, stripe, etc
   isActive        Boolean  @default(true)
   isDefault       Boolean  @default(false)
   
+  // NMI config
   nmiSecurityKey  String?
   nmiEndpoint     String?
   nmiMerchantId   String?
@@ -102,88 +105,88 @@ model PaymentGateway {
   updatedAt       DateTime @updatedAt
 }
 
-// Subscriptions - MUST match checkout database exactly
+// Synced products from Shopify
+model SyncedProduct {
+  id              String   @id @default(uuid())
+  shopifyId       String   @unique
+  title           String
+  handle          String
+  price           Float
+  compareAtPrice  Float?
+  image           String?
+  description     String?
+  productType     String?
+  vendor          String?
+  tags            String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Cart data from Shopify webhooks
+model ShopifyCart {
+  id              String   @id @default(uuid())
+  cartToken       String   @unique  // Shopify cart token
+  cartId          String?           // Shopify cart ID (gid://shopify/Cart/xxx)
+  items           Json              // Array of cart items
+  total           Float
+  currency        String   @default("USD")
+  customerEmail   String?
+  customerData    Json?             // Customer info if available
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([cartToken])
+}
+
+// Subscription products
+model SubscriptionProduct {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  price           Float
+  interval        String   @default("month")
+  intervalCount   Int      @default(1)
+  showOnCheckout  Boolean  @default(true)
+  gatewayId       String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Settings
+model Setting {
+  id              String   @id @default(uuid())
+  key             String   @unique
+  value           String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Subscriptions
 model Subscription {
   id              String   @id @default(uuid())
   customerId      String
   customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   
-  orderId         String?
+  orderId         String?  // Link to initial order
   order           Order?   @relation(fields: [orderId], references: [id])
   
-  name            String
-  price           Float    @default(9.99)
+  name            String   // Subscription name
+  price           Float    @default(9.99) // Monthly price (default for existing subscriptions)
   
-  gatewayId       String?
-  nmiVaultId      String?
-  basisTheoryTokenId String?
+  // Token for rebills (Basis Theory or NMI vault)
+  gatewayId       String?  // Which gateway to use for rebills
+  nmiVaultId      String?  // Legacy NMI vault ID
+  basisTheoryTokenId String? // Basis Theory token for rebills
   
-  status          String   @default("active")
+  status          String   @default("active") // active, paused, cancelled
   
-  billingDay      Int      @default(1)
+  billingDay      Int      @default(1) // Day of month to bill
   nextBillDate    DateTime?
   lastBillDate    DateTime?
   totalBills      Int      @default(0)
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-}
-
-// Shopify Stores
-model ShopifyStore {
-  id              String   @id @default(uuid())
-  name            String
-  domain          String   @unique
-  accessToken     String
-  isActive        Boolean  @default(true)
-  
-  lastSyncAt      DateTime?
-  productCount    Int      @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  products        ShopifyProduct[]
-}
-
-// Shopify Products
-model ShopifyProduct {
-  id              String   @id @default(uuid())
-  storeId         String
-  store           ShopifyStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  
-  shopifyId       String   @unique
-  title           String
-  handle          String?
-  productType     String?
-  vendor          String?
-  status          String   @default("active")
-  
-  image           String?
-  price          Float?
-  compareAtPrice Float?
-  
-  variants        String?  // JSON string of variants
-  
-  syncedAt       DateTime?
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  @@unique([storeId, shopifyId])
-}
-
-// Subscription Products
-model SubscriptionProduct {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name           String
-  description    String?
-  price          Float?   @default(0)
-  interval       String?   @default("month")
-  intervalCount  Int?      @default(1)
-  showOnCheckout Boolean?  @default(true)
-  gatewayId      String?   @db.Uuid
-  isActive       Boolean?  @default(true)
-  createdAt      DateTime? @default(now()) @db.Timestamp(6)
-  updatedAt      DateTime? @default(now()) @db.Timestamp(6)
 }
