@@ -39,6 +39,24 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
     console.error(e)
   }
 
+  // Get transactions for this order's subscriptions
+  let transactions: any[] = []
+  try {
+    const subscriptionIds = subscriptions.map(s => s.id)
+    transactions = await prisma.transaction.findMany({
+      where: { 
+        OR: [
+          { orderId: id },
+          { subscriptionId: { in: subscriptionIds } }
+        ]
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50
+    })
+  } catch (e) {
+    console.error(e)
+  }
+
   let gateways: any[] = []
   try {
     gateways = await prisma.paymentGateway.findMany()
@@ -297,6 +315,77 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
                   </div>
                 )
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Transactions */}
+        {transactions.length > 0 && (
+          <div className="mt-6 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+              <h2 className="font-semibold text-slate-900">Transactions</h2>
+              <span className="text-sm text-slate-500">{transactions.length} transaction{transactions.length !== 1 ? 's' : ''}</span>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {transactions.map((tx) => (
+                <div key={tx.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      tx.status === 'approved' 
+                        ? 'bg-emerald-100' 
+                        : tx.status === 'declined'
+                        ? 'bg-red-100'
+                        : 'bg-amber-100'
+                    }`}>
+                      {tx.status === 'approved' ? (
+                        <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : tx.status === 'declined' ? (
+                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-slate-900">{fmt(tx.amount)}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                          tx.type === 'initial' 
+                            ? 'bg-blue-100 text-blue-700' 
+                            : tx.type === 'rebill'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {tx.type}
+                        </span>
+                      </div>
+                      <div className="text-sm text-slate-500">
+                        {tx.description || `Transaction #${tx.id.slice(0, 8)}`}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-slate-900">
+                      {new Date(tx.createdAt).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                    {tx.transactionId && (
+                      <div className="text-xs text-slate-400 font-mono">
+                        TX: {tx.transactionId}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

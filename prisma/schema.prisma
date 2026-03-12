@@ -85,6 +85,7 @@ model Order {
   updatedAt       DateTime  @updatedAt
   
   subscriptions   Subscription[]
+  transactions    Transaction[]
 }
 
 // Payment gateways
@@ -189,4 +190,36 @@ model Subscription {
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  
+  transactions    Transaction[]
+}
+
+// Transactions - tracks all charges (initial + rebills)
+model Transaction {
+  id              String   @id @default(uuid())
+  subscriptionId  String
+  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  
+  orderId         String?  // Link to original order
+  order           Order?   @relation(fields: [orderId], references: [id])
+  
+  amount          Float
+  currency        String   @default("USD")
+  
+  // Payment details
+  gatewayId       String?  // Which gateway processed this
+  transactionId   String?  // NMI/processor transaction ID
+  authCode       String?  // Authorization code
+  
+  status          String   @default("pending") // pending, approved, declined, refunded
+  
+  // Metadata
+  type            String   @default("rebill") // initial, rebill, refund
+  description     String?  // Human-readable description
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([subscriptionId])
+  @@index([orderId])
+  @@index([createdAt])
 }
