@@ -10,9 +10,9 @@ interface Subscription {
   status: string
   gatewayId: string | null
   basisTheoryTokenId: string | null
-  nmiVaultId: string | null
+  nmiVaultId?: string | null
   nextBillDate: Date | null
-  lastBillDate: Date | null
+  lastBillDate?: Date | null
   totalBills: number
 }
 
