@@ -1,43 +1,36 @@
-import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-
-const CHECKOUT_API = process.env.CHECKOUT_API || 'https://payloop-checkout.onrender.com'
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { isAuthenticated } from '@/lib/auth'
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Auth check
+  if (!await isAuthenticated()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { id } = await params
     const body = await request.json()
-    
-    // Get auth token from cookies
-    const cookieStore = await cookies()
-    const token = cookieStore.get('auth_token')?.value
-    
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { price } = body
+
+    if (typeof price !== 'number' || price < 0) {
+      return NextResponse.json({ error: 'Invalid price' }, { status: 400 })
     }
-    
-    // Forward to checkout API
-    const res = await fetch(`${CHECKOUT_API}/api/subscriptions/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(body)
+
+    // Update subscription directly in database
+    const subscription = await prisma.subscription.update({
+      where: { id },
+      data: { price }
     })
-    
-    if (!res.ok) {
-      const error = await res.json()
-      return NextResponse.json(error, { status: res.status })
-    }
-    
-    const data = await res.json()
-    return NextResponse.json(data)
+
+    console.log('Updated subscription price:', subscription.id, 'to $' + price)
+
+    return NextResponse.json({ success: true, subscription })
   } catch (error) {
-    console.error('Update subscription error:', error)
+    console.error('Error updating subscription:', error)
     return NextResponse.json({ error: 'Failed to update subscription' }, { status: 500 })
   }
 }
