@@ -36,7 +36,8 @@ async function getGatewayCaps() {
   // Combine data
   return gateways.map(gateway => {
     const mtdVolume = volumeByGateway[gateway.id] || 0
-    const cap = gateway.monthlyCap || 0
+    // monthlyCap not in database yet, default to 0
+    const cap = (gateway as any).monthlyCap || 0
     const remaining = cap > 0 ? cap - mtdVolume : null
     const percentUsed = cap > 0 ? (mtdVolume / cap) * 100 : 0
 

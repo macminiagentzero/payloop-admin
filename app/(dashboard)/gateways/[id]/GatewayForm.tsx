@@ -11,7 +11,7 @@ interface Gateway {
   nmiMerchantId: string | null
   nmiEndpoint: string | null
   nmiSecurityKey: string | null
-  monthlyCap: number | null
+  monthlyCap?: number | null
   isActive: boolean
   isDefault: boolean
 }

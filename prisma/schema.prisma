@@ -36,6 +36,7 @@ model PaymentMethod {
   customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   
   nmiVaultId     String?  @unique
+  basisTheoryTokenId String? @unique
   
   cardLast4      String
   cardType       String
@@ -96,7 +97,6 @@ model PaymentGateway {
   nmiSecurityKey  String?
   nmiEndpoint     String?
   nmiMerchantId   String?
-  monthlyCap      Float?   // Monthly processing limit in USD
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
