@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import InlinePriceEdit from '@/components/InlinePriceEdit'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -245,8 +246,11 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
                         </div>
                         <div className="flex flex-wrap gap-4 text-sm">
                           <div className="flex items-center gap-1.5">
-                            <span className="text-slate-500">Price</span>
-                            <span className="font-semibold text-slate-900">{fmt(sub.price || 0)}/mo</span>
+                            <InlinePriceEdit 
+                              subscriptionId={sub.id} 
+                              orderId={order.id} 
+                              currentPrice={sub.price || 0} 
+                            />
                           </div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-slate-500">Gateway</span>
@@ -277,12 +281,6 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <a 
-                          href={`/orders/${order.id}/subscription/${sub.id}/edit`}
-                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-                        >
-                          Edit Price
-                        </a>
                         {hasToken && sub.status === 'active' && (
                           <a 
                             href={`/orders/${order.id}/subscription/${sub.id}/charge`}
