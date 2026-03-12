@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import SubscriptionActions from '@/components/SubscriptionActions'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -32,10 +33,6 @@ export default async function OrderDetailPage({ params }: Props) {
   // Get gateway info if gatewayId exists
   let gateway = null
   if (order.gatewayId) {
-    // gatewayId might be:
-    // - A UUID (new format)
-    // - Gateway name like 'rcdronez'
-    // - Prefixed name like 'nmi-rcdronez'
     const gid = order.gatewayId
     const isUuid = gid.includes('-') && gid.length > 20
     
@@ -44,7 +41,6 @@ export default async function OrderDetailPage({ params }: Props) {
         where: { id: gid }
       })
     } else {
-      // Try exact match, then without prefix
       gateway = await prisma.paymentGateway.findFirst({
         where: {
           OR: [
@@ -56,12 +52,16 @@ export default async function OrderDetailPage({ params }: Props) {
     }
   }
 
-  // Get subscriptions for this customer
+  // Get subscriptions for this customer with gateway info
   const subscriptions = order.customerId 
     ? await prisma.subscription.findMany({
         where: { customerId: order.customerId },
       })
     : []
+
+  // Get gateways for subscription display
+  const gateways = await prisma.paymentGateway.findMany()
+  const gatewayMap = new Map(gateways.map(g => [g.id, g]))
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -218,22 +218,34 @@ export default async function OrderDetailPage({ params }: Props) {
       {/* Subscriptions */}
       {subscriptions.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Subscriptions</h2>
-          <div className="space-y-3">
-            {subscriptions.map((sub) => (
-              <div key={sub.id} className="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-slate-900">{sub.name}</p>
-                  <p className="text-sm text-slate-500 capitalize">{sub.status}</p>
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">
+            Subscriptions ({subscriptions.length})
+          </h2>
+          <div className="space-y-4">
+            {subscriptions.map((sub) => {
+              const subGateway = sub.gatewayId ? gatewayMap.get(sub.gatewayId) : null
+              return (
+                <div key={sub.id} className="p-4 bg-purple-50 rounded-lg border border-purple-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="font-semibold text-slate-900">{sub.name}</p>
+                      <p className="text-xs text-slate-500">ID: {sub.id.slice(0, 8)}</p>
+                    </div>
+                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
+                      sub.status === 'active' ? 'bg-green-100 text-green-700' :
+                      sub.status === 'paused' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-red-100 text-red-700'
+                    }`}>
+                      {sub.status}
+                    </span>
+                  </div>
+                  <SubscriptionActions 
+                    subscription={sub} 
+                    gateway={subGateway} 
+                  />
                 </div>
-                <Link
-                  href={`/subscriptions/${sub.id}`}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-900"
-                >
-                  View →
-                </Link>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
