@@ -1,11 +1,17 @@
 import { prisma } from '@/lib/prisma'
-import SubscriptionsTable from '@/components/SubscriptionsTable'
+import SubscriptionsTableClient from '@/components/SubscriptionsTableClient'
 
 export default async function SubscriptionsPage() {
-  const subscriptions = await prisma.subscription.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: { customer: true },
-  })
+  const [subscriptions, gateways] = await Promise.all([
+    prisma.subscription.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { customer: true },
+    }),
+    prisma.paymentGateway.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' }
+    })
+  ])
 
   return (
     <div className="space-y-6">
@@ -15,7 +21,7 @@ export default async function SubscriptionsPage() {
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <SubscriptionsTable subscriptions={subscriptions} />
+        <SubscriptionsTableClient subscriptions={subscriptions} gateways={gateways} />
       </div>
     </div>
   )
