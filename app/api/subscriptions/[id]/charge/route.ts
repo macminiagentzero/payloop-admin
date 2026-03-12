@@ -3,14 +3,37 @@ import { prisma } from '@/lib/prisma'
 import { isAuthenticated } from '@/lib/auth'
 
 const CHECKOUT_API = process.env.CHECKOUT_API || 'https://payloop-checkout.onrender.com'
-const AUTH_SECRET = process.env.AUTH_SECRET
 
-// Generate auth token for checkout API
-function generateAuthToken(): string {
-  const timestamp = Date.now()
-  const email = 'admin@mellone.co'
-  const data = `${timestamp}:${email}:${AUTH_SECRET}`
-  return Buffer.from(data).toString('base64')
+// Login to checkout API and get valid token
+async function getCheckoutToken(): Promise<string | null> {
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@mellone.co'
+  const adminPassword = process.env.ADMIN_PASSWORD
+  
+  if (!adminPassword) {
+    console.error('ADMIN_PASSWORD not set')
+    return null
+  }
+  
+  try {
+    const res = await fetch(`${CHECKOUT_API}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: adminEmail, password: adminPassword })
+    })
+    
+    const data = await res.json()
+    
+    if (data.success && data.token) {
+      console.log('Got checkout auth token')
+      return data.token
+    }
+    
+    console.error('Failed to get checkout token:', data.error)
+    return null
+  } catch (error) {
+    console.error('Error getting checkout token:', error)
+    return null
+  }
 }
 
 export async function POST(
@@ -53,8 +76,16 @@ export async function POST(
       return NextResponse.json({ error: errorMsg }, { status: 400 })
     }
 
-    // Generate auth token for checkout API
-    const token = generateAuthToken()
+    // Get auth token from checkout API
+    const token = await getCheckoutToken()
+    
+    if (!token) {
+      const errorMsg = 'Failed to authenticate with checkout service'
+      if (orderId) return NextResponse.redirect(new URL(`/orders/${orderId}?error=${encodeURIComponent(errorMsg)}`, request.url))
+      return NextResponse.json({ error: errorMsg }, { status: 500 })
+    }
+
+    console.log('Charging subscription:', id, 'Amount:', subscription.price)
 
     // Call checkout API to charge
     const res = await fetch(`${CHECKOUT_API}/api/subscriptions/${id}/charge`, {
