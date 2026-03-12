@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { isAuthenticated } from '@/lib/auth'
 
 const CHECKOUT_API = process.env.CHECKOUT_API || 'https://payloop-checkout.onrender.com'
+const ADMIN_URL = process.env.ADMIN_URL || 'https://payloop-admin.onrender.com'
 
 // Login to checkout API and get valid token
 async function getCheckoutToken(): Promise<string | null> {
@@ -66,13 +67,13 @@ export async function POST(
 
     if (!subscription) {
       const errorMsg = 'Subscription not found'
-      if (orderId) return NextResponse.redirect(new URL(`/orders/${orderId}?error=${encodeURIComponent(errorMsg)}`, request.url))
+      if (orderId) return NextResponse.redirect(`${ADMIN_URL}/orders/${orderId}?error=${encodeURIComponent(errorMsg)}`)
       return NextResponse.json({ error: errorMsg }, { status: 404 })
     }
 
     if (!subscription.basisTheoryTokenId && !subscription.nmiVaultId) {
       const errorMsg = 'No payment method stored for this subscription'
-      if (orderId) return NextResponse.redirect(new URL(`/orders/${orderId}?error=${encodeURIComponent(errorMsg)}`, request.url))
+      if (orderId) return NextResponse.redirect(`${ADMIN_URL}/orders/${orderId}?error=${encodeURIComponent(errorMsg)}`)
       return NextResponse.json({ error: errorMsg }, { status: 400 })
     }
 
@@ -81,7 +82,7 @@ export async function POST(
     
     if (!token) {
       const errorMsg = 'Failed to authenticate with checkout service'
-      if (orderId) return NextResponse.redirect(new URL(`/orders/${orderId}?error=${encodeURIComponent(errorMsg)}`, request.url))
+      if (orderId) return NextResponse.redirect(`${ADMIN_URL}/orders/${orderId}?error=${encodeURIComponent(errorMsg)}`)
       return NextResponse.json({ error: errorMsg }, { status: 500 })
     }
 
@@ -101,7 +102,7 @@ export async function POST(
     if (!res.ok) {
       console.error('Charge failed:', data)
       const errorMsg = data.error || 'Charge failed'
-      if (orderId) return NextResponse.redirect(new URL(`/orders/${orderId}?error=${encodeURIComponent(errorMsg)}`, request.url))
+      if (orderId) return NextResponse.redirect(`${ADMIN_URL}/orders/${orderId}?error=${encodeURIComponent(errorMsg)}`)
       return NextResponse.json(data, { status: res.status })
     }
 
@@ -109,7 +110,7 @@ export async function POST(
     const successMsg = `Charged $${(subscription.price || 0).toFixed(2)} - TX: ${data.transactionId}`
     
     if (orderId) {
-      return NextResponse.redirect(new URL(`/orders/${orderId}?success=${encodeURIComponent(successMsg)}`, request.url))
+      return NextResponse.redirect(`${ADMIN_URL}/orders/${orderId}?success=${encodeURIComponent(successMsg)}`)
     }
 
     return NextResponse.json(data)
