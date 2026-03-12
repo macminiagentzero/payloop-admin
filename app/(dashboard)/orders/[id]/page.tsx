@@ -4,10 +4,12 @@ import Link from 'next/link'
 
 interface Props {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ success?: string; error?: string }>
 }
 
-export default async function OrderDetailPage({ params }: Props) {
+export default async function OrderDetailPage({ params, searchParams }: Props) {
   const { id } = await params
+  const { success, error } = await searchParams
   
   const order = await prisma.order.findUnique({
     where: { id },
@@ -50,6 +52,18 @@ export default async function OrderDetailPage({ params }: Props) {
   return (
     <div className="space-y-6 p-6">
       <Link href="/orders" className="text-blue-600 hover:underline">← Back to Orders</Link>
+      
+      {/* Success/Error Messages */}
+      {success && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-green-700">{decodeURIComponent(success)}</p>
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-700">{decodeURIComponent(error)}</p>
+        </div>
+      )}
       
       <div className="flex justify-between items-center">
         <div>
