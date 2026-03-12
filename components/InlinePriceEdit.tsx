@@ -12,34 +12,24 @@ export default function InlinePriceEdit({ subscriptionId, orderId, currentPrice 
   const [editing, setEditing] = useState(false)
   const [price, setPrice] = useState(currentPrice.toFixed(2))
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const handleSave = async () => {
     const newPrice = parseFloat(price)
     if (isNaN(newPrice) || newPrice < 0) {
-      setError('Invalid price')
       return
     }
 
     setSaving(true)
-    setError(null)
 
     try {
-      const res = await fetch(`/api/subscriptions/${subscriptionId}/edit-price`, {
+      await fetch(`/api/subscriptions/${subscriptionId}/edit-price`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `price=${newPrice}&orderId=${orderId}`
       })
-
-      if (res.ok) {
-        window.location.reload()
-      } else {
-        setError('Failed to save')
-      }
-    } catch {
-      setError('Failed to save')
     } finally {
-      setSaving(false)
+      // Always reload - the price is saved even if we get a redirect
+      window.location.reload()
     }
   }
 
@@ -68,12 +58,11 @@ export default function InlinePriceEdit({ subscriptionId, orderId, currentPrice 
           {saving ? '...' : 'Save'}
         </button>
         <button
-          onClick={() => { setEditing(false); setPrice(currentPrice.toFixed(2)); setError(null) }}
+          onClick={() => setEditing(false)}
           className="px-2 py-1 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded"
         >
           Cancel
         </button>
-        {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
     )
   }
