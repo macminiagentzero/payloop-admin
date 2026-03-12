@@ -80,6 +80,8 @@ model Order {
   
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
+  
+  subscriptions   Subscription[]
 }
 
 // Payment gateways
@@ -100,20 +102,27 @@ model PaymentGateway {
   updatedAt       DateTime @updatedAt
 }
 
-// Subscriptions - minimal fields that match actual database
+// Subscriptions - MUST match checkout database exactly
 model Subscription {
   id              String   @id @default(uuid())
   customerId      String
   customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   
+  orderId         String?
+  order           Order?   @relation(fields: [orderId], references: [id])
+  
   name            String
   price           Float    @default(9.99)
+  
+  gatewayId       String?
+  nmiVaultId      String?
+  basisTheoryTokenId String?
+  
   status          String   @default("active")
   
-  // Optional fields - may exist in DB
-  gatewayId       String?
-  basisTheoryTokenId String?
+  billingDay      Int      @default(1)
   nextBillDate    DateTime?
+  lastBillDate    DateTime?
   totalBills      Int      @default(0)
   
   createdAt       DateTime @default(now())
