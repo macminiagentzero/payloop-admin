@@ -77,10 +77,29 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: 'desc' },
-      include: { customer: true },
+      include: { 
+        customer: true,
+        subscriptions: {
+          select: {
+            id: true,
+            threeDSCavv: true,
+            threeDSXid: true,
+            threeDSEci: true,
+            threeDSAuthDate: true,
+            status: true,
+            totalBills: true
+          }
+        }
+      },
     })
 
-    return NextResponse.json(orders)
+    // Add has3DS flag to each order
+    const ordersWith3DS = orders.map(order => ({
+      ...order,
+      has3DS: order.subscriptions?.some((s: any) => s.threeDSCavv) || false
+    }))
+
+    return NextResponse.json(ordersWith3DS)
   } catch (error) {
     console.error('Orders error:', error)
     return NextResponse.json(
