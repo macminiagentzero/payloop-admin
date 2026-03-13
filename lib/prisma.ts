@@ -18,7 +18,12 @@ async function migrateDatabase() {
     // Add pausedAt and cancelledAt to Subscription table
     await prisma.$executeRaw`ALTER TABLE "Subscription" ADD COLUMN IF NOT EXISTS "pausedAt" TIMESTAMP`
     await prisma.$executeRaw`ALTER TABLE "Subscription" ADD COLUMN IF NOT EXISTS "cancelledAt" TIMESTAMP`
-    console.log('>>> Migration: Subscription pausedAt/cancelledAt columns ensured')
+    
+    // Add billing interval columns to Subscription table
+    await prisma.$executeRaw`ALTER TABLE "Subscription" ADD COLUMN IF NOT EXISTS "billingInterval" INTEGER DEFAULT 1`
+    await prisma.$executeRaw`ALTER TABLE "Subscription" ADD COLUMN IF NOT EXISTS "billingIntervalUnit" TEXT DEFAULT 'month'`
+    
+    console.log('>>> Migration: All columns ensured')
   } catch (error: any) {
     // Log but don't crash - columns might already exist
     console.log('>>> Migration: Non-critical error -', error.message || 'skipped')

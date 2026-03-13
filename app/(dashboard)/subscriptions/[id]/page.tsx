@@ -144,28 +144,84 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
       {/* Billing Settings */}
       <div className="bg-white rounded-lg border p-6">
         <h2 className="text-lg font-semibold mb-4">Billing Settings</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Billing Day</p>
-            <div className="flex items-center gap-2">
-              <span className="text-lg font-medium">{subscription.billingDay}th of each month</span>
-              <form action={`/api/subscriptions/${id}/billing-day`} method="POST" className="flex items-center gap-2">
-                <select name="day" className="border rounded px-2 py-1 text-sm">
-                  {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
-                    <option key={d} value={d} selected={subscription.billingDay === d}>{d}</option>
-                  ))}
-                </select>
-                <button type="submit" className="text-sm px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">
-                  Update
-                </button>
-              </form>
-            </div>
-            <p className="text-xs text-gray-400 mt-2">The day of the month when recurring charges are processed</p>
+        
+        {/* Billing Interval */}
+        <div className="mb-6">
+          <p className="text-sm text-gray-500 mb-2">Billing Interval</p>
+          <div className="flex items-center gap-3">
+            <span className="text-gray-600">Every</span>
+            <form action={`/api/subscriptions/${id}/billing-interval`} method="POST" className="flex items-center gap-2">
+              <select name="interval" className="border rounded px-3 py-2 text-sm" defaultValue={subscription.billingInterval || 1}>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(n => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <select name="unit" className="border rounded px-3 py-2 text-sm" defaultValue={subscription.billingIntervalUnit || 'month'}>
+                <option value="day">day(s)</option>
+                <option value="week">week(s)</option>
+                <option value="month">month(s)</option>
+                <option value="year">year(s)</option>
+              </select>
+              <button type="submit" className="text-sm px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                Update
+              </button>
+            </form>
           </div>
-          <div>
-            <p className="text-sm text-gray-500 mb-1">Last Billed</p>
-            <p className="text-lg font-medium">{date(subscription.lastBillDate)}</p>
+          <p className="text-xs text-gray-400 mt-2">
+            Current: Every {subscription.billingInterval || 1} {subscription.billingIntervalUnit || 'month'}{((subscription.billingInterval || 1) > 1 ? 's' : '')}
+          </p>
+        </div>
+
+        {/* Next Bill Date */}
+        <div className="mb-6">
+          <p className="text-sm text-gray-500 mb-2">Next Bill Date</p>
+          <div className="flex items-center gap-3">
+            <form action={`/api/subscriptions/${id}/next-bill-date`} method="POST" className="flex items-center gap-2">
+              <input 
+                type="date" 
+                name="nextBillDate" 
+                className="border rounded px-3 py-2 text-sm"
+                defaultValue={subscription.nextBillDate ? new Date(subscription.nextBillDate).toISOString().split('T')[0] : ''}
+              />
+              <button type="submit" className="text-sm px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+                Update
+              </button>
+            </form>
           </div>
+          <p className="text-xs text-gray-400 mt-2">
+            Manually set when the next charge will occur
+          </p>
+        </div>
+
+        {/* Quick Actions */}
+        <div>
+          <p className="text-sm text-gray-500 mb-2">Quick Actions</p>
+          <div className="flex flex-wrap gap-2">
+            <form action={`/api/subscriptions/${id}/next-bill-date`} method="POST">
+              <input type="hidden" name="nextBillDate" value={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} />
+              <button type="submit" className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                Skip 7 days
+              </button>
+            </form>
+            <form action={`/api/subscriptions/${id}/next-bill-date`} method="POST">
+              <input type="hidden" name="nextBillDate" value={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} />
+              <button type="submit" className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                Skip 30 days
+              </button>
+            </form>
+            <form action={`/api/subscriptions/${id}/next-bill-date`} method="POST">
+              <input type="hidden" name="nextBillDate" value={new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} />
+              <button type="submit" className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                Skip 3 months
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Last Billed */}
+        <div className="mt-4 pt-4 border-t">
+          <p className="text-sm text-gray-500">Last Billed</p>
+          <p className="text-lg font-medium">{date(subscription.lastBillDate)}</p>
         </div>
       </div>
 

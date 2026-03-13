@@ -191,7 +191,10 @@ model Subscription {
   pausedAt        DateTime? // When subscription was paused
   cancelledAt     DateTime? // When subscription was cancelled
   
-  billingDay      Int      @default(1) // Day of month to bill
+  // Billing configuration
+  billingInterval      Int      @default(1) // Every X intervals
+  billingIntervalUnit  String   @default("month") // day, week, month, year
+  billingDay      Int      @default(1) // Day of month/week (1-31 or 1-7)
   nextBillDate    DateTime?
   lastBillDate    DateTime?
   totalBills      Int      @default(0)
