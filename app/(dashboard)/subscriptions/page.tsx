@@ -1,12 +1,31 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 
-export default async function SubscriptionsPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function SubscriptionsPage({ searchParams }: { searchParams: Promise<{ status?: string; gateway?: string; search?: string }> }) {
+  const params = await searchParams
+  
   let subscriptions: any[] = []
   let gateways: any[] = []
   
+  // Build filter
+  const where: any = {}
+  if (params.status && params.status !== 'all') {
+    where.status = params.status
+  }
+  if (params.gateway && params.gateway !== 'all') {
+    where.gatewayId = params.gateway
+  }
+  if (params.search) {
+    where.customer = {
+      email: { contains: params.search, mode: 'insensitive' }
+    }
+  }
+  
   try {
     subscriptions = await prisma.subscription.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: { customer: true },
     })
@@ -25,20 +44,41 @@ export default async function SubscriptionsPage() {
   const date = (d: Date | null) => d ? new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—'
 
   // Calculate stats
-  const activeCount = subscriptions.filter(s => s.status === 'active').length
-  const pausedCount = subscriptions.filter(s => s.status === 'paused').length
-  const cancelledCount = subscriptions.filter(s => s.status === 'cancelled').length
-  const mrr = subscriptions
-    .filter(s => s.status === 'active')
-    .reduce((sum, s) => sum + (s.price || 0), 0)
-  const with3DS = subscriptions.filter(s => s.threeDSCavv).length
+  const allSubs = await prisma.subscription.findMany({ include: { customer: true } })
+  const activeCount = allSubs.filter(s => s.status === 'active').length
+  const pausedCount = allSubs.filter(s => s.status === 'paused').length
+  const cancelledCount = allSubs.filter(s => s.status === 'cancelled').length
+  const mrr = allSubs.filter(s => s.status === 'active').reduce((sum, s) => sum + (s.price || 0), 0)
+  const with3DS = allSubs.filter(s => s.threeDSCavv).length
+
+  // CSV Export data
+  const csvData = subscriptions.map(sub => ({
+    id: sub.id,
+    customer: `${sub.customer?.firstName} ${sub.customer?.lastName}`,
+    email: sub.customer?.email,
+    price: sub.price,
+    status: sub.status,
+    gateway: gatewayMap.get(sub.gatewayId)?.name || 'Default',
+    nextBill: date(sub.nextBillDate),
+    totalBills: sub.totalBills,
+    has3DS: sub.threeDSCavv ? 'Yes' : 'No'
+  }))
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Subscriptions</h1>
-        <div className="text-sm text-gray-500">
-          {subscriptions.length} total · {with3DS} with 3DS protection
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-gray-500">
+            {subscriptions.length} shown · {allSubs.length} total · {with3DS} with 3DS
+          </div>
+          {/* Export CSV Button */}
+          <a
+            href={`/api/subscriptions/export?${new URLSearchParams(params as any).toString()}`}
+            className="px-3 py-1.5 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+          >
+            Export CSV
+          </a>
         </div>
       </div>
 
@@ -76,29 +116,56 @@ export default async function SubscriptionsPage() {
 
       {subscriptions.length === 0 ? (
         <div className="bg-white p-12 rounded-lg border text-center">
-          <p className="text-gray-500">No subscriptions yet</p>
-          <p className="text-sm text-gray-400 mt-2">Subscriptions are created when customers complete checkout</p>
+          <p className="text-gray-500">No subscriptions found</p>
+          <p className="text-sm text-gray-400 mt-2">Try adjusting your filters or create subscriptions from checkout</p>
         </div>
       ) : (
         <div className="bg-white rounded-lg border overflow-hidden">
-          <div className="px-4 py-3 border-b bg-gray-50 flex items-center gap-4">
-            <select className="text-sm border rounded px-2 py-1">
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-            <select className="text-sm border rounded px-2 py-1">
-              <option value="">All Gateways</option>
-              {gateways.map(g => (
-                <option key={g.id} value={g.id}>{g.displayName || g.name}</option>
-              ))}
-            </select>
-            <input 
-              type="text" 
-              placeholder="Search by email..." 
-              className="text-sm border rounded px-3 py-1 flex-1 max-w-xs"
-            />
+          {/* Filters */}
+          <div className="px-4 py-3 border-b bg-gray-50 flex flex-wrap items-center gap-4">
+            <form method="GET" className="flex flex-wrap items-center gap-3">
+              <select 
+                name="status" 
+                className="text-sm border rounded px-2 py-1.5 bg-white"
+                defaultValue={params.status || 'all'}
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <select 
+                name="gateway" 
+                className="text-sm border rounded px-2 py-1.5 bg-white"
+                defaultValue={params.gateway || 'all'}
+              >
+                <option value="all">All Gateways</option>
+                {gateways.map(g => (
+                  <option key={g.id} value={g.id}>{g.displayName || g.name}</option>
+                ))}
+              </select>
+              <input 
+                type="text" 
+                name="search"
+                placeholder="Search by email..." 
+                className="text-sm border rounded px-3 py-1.5 w-48"
+                defaultValue={params.search || ''}
+              />
+              <button 
+                type="submit"
+                className="text-sm px-3 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              >
+                Filter
+              </button>
+              {(params.status || params.gateway || params.search) && (
+                <a 
+                  href="/subscriptions"
+                  className="text-sm px-3 py-1.5 text-gray-600 hover:text-gray-800"
+                >
+                  Clear
+                </a>
+              )}
+            </form>
           </div>
           
           <table className="w-full">
