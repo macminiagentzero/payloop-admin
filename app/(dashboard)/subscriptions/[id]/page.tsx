@@ -193,31 +193,6 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
           </p>
         </div>
 
-        {/* Quick Actions */}
-        <div>
-          <p className="text-sm text-gray-500 mb-2">Quick Actions</p>
-          <div className="flex flex-wrap gap-2">
-            <form action={`/api/subscriptions/${id}/next-bill-date`} method="POST">
-              <input type="hidden" name="nextBillDate" value={new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} />
-              <button type="submit" className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
-                Skip 7 days
-              </button>
-            </form>
-            <form action={`/api/subscriptions/${id}/next-bill-date`} method="POST">
-              <input type="hidden" name="nextBillDate" value={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} />
-              <button type="submit" className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
-                Skip 30 days
-              </button>
-            </form>
-            <form action={`/api/subscriptions/${id}/next-bill-date`} method="POST">
-              <input type="hidden" name="nextBillDate" value={new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]} />
-              <button type="submit" className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
-                Skip 3 months
-              </button>
-            </form>
-          </div>
-        </div>
-
         {/* Last Billed */}
         <div className="mt-4 pt-4 border-t">
           <p className="text-sm text-gray-500">Last Billed</p>
