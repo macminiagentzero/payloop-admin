@@ -217,7 +217,7 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
               {/* Refund Button */}
               {order.status === 'approved' && (
                 <div className="mt-4">
-                  <form action={`/api/orders/${params.id}/refund`} method="POST" className="inline">
+                  <form action={`/api/orders/${id}/refund`} method="POST" className="inline">
                     <input type="hidden" name="reason" value="Requested by admin" />
                     <button
                       type="submit"
