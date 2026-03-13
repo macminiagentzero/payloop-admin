@@ -213,6 +213,26 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
                   )}
                 </div>
               )}
+              
+              {/* Refund Button */}
+              {order.status === 'approved' && (
+                <div className="mt-4">
+                  <form action={`/api/orders/${params.id}/refund`} method="POST" className="inline">
+                    <input type="hidden" name="reason" value="Requested by admin" />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-sm font-medium rounded-lg bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors"
+                      onClick={(e) => {
+                        if (!confirm('Are you sure you want to refund this order?')) {
+                          e.preventDefault()
+                        }
+                      }}
+                    >
+                      Refund Order
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         </div>
