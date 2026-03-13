@@ -42,9 +42,18 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
   // Get transactions for this order's subscriptions
   let transactions: any[] = []
   try {
+    // First, get all transactions for debugging
+    const allTransactions = await prisma.transaction.findMany({
+      take: 100,
+      orderBy: { createdAt: 'desc' }
+    })
+    console.log('>>> All transactions in DB:', allTransactions.length)
+    
     const subscriptionIds = subscriptions.map(s => s.id)
     console.log('>>> Order:', id, 'Customer:', order.customerId)
     console.log('>>> Subscription IDs:', subscriptionIds)
+    
+    // Query transactions for this order
     transactions = await prisma.transaction.findMany({
       where: { 
         OR: [
@@ -55,7 +64,7 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
       orderBy: { createdAt: 'desc' },
       take: 50
     })
-    console.log('>>> Transactions found:', transactions.length)
+    console.log('>>> Transactions for this order:', transactions.length)
   } catch (e) {
     console.error('>>> Error fetching transactions:', e)
   }
