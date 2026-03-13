@@ -17,12 +17,13 @@ export default function RefundButton({ orderId, transactionId, amount, label = '
     
     setLoading(true)
     try {
+      // Amount is in dollars (not cents), pass as-is
       const res = await fetch(`/api/orders/${orderId}/refund`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           transactionId,
-          amount,
+          amount, // Already in dollars
           reason: 'Requested by admin' 
         })
       })
