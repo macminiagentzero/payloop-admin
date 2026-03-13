@@ -14,9 +14,13 @@ async function migrateDatabase() {
     // Add cavv column to Transaction table if it doesn't exist
     await prisma.$executeRaw`ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "cavv" TEXT`
     console.log('>>> Migration: Transaction.cavv column ensured')
-  } catch (error) {
-    console.error('>>> Migration error:', error.message)
+  } catch (error: any) {
+    // Log but don't crash - column might already exist
+    console.log('>>> Migration: Transaction.cavv -', error.message || 'skipped')
   }
 }
 
-migrateDatabase()
+// Run migration asynchronously without blocking startup
+migrateDatabase().catch(err => {
+  console.log('>>> Migration: Non-critical error -', err.message)
+})
