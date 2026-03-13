@@ -99,6 +99,9 @@ export async function POST(
 
     const data = await res.json()
 
+    console.log('>>> Admin API: Checkout response status:', res.status)
+    console.log('>>> Admin API: Checkout response data:', JSON.stringify(data))
+
     if (!res.ok) {
       console.error('Charge failed:', data)
       const errorMsg = data.error || 'Charge failed'
@@ -114,8 +117,10 @@ export async function POST(
     }
 
     return NextResponse.json(data)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Charge subscription error:', error)
-    return NextResponse.json({ error: 'Failed to charge subscription' }, { status: 500 })
+    console.error('Charge subscription error stack:', error?.stack)
+    console.error('Charge subscription error message:', error?.message)
+    return NextResponse.json({ error: 'Failed to charge subscription', details: error?.message || 'Unknown error' }, { status: 500 })
   }
 }
