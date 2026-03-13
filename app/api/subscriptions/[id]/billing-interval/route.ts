@@ -53,7 +53,8 @@ export async function POST(
     })
 
     // Redirect back to subscription page
-    return NextResponse.redirect(new URL(`/subscriptions/${id}?updated=true`, request.url))
+    const baseUrl = process.env.ADMIN_URL || 'https://payloop-admin.onrender.com'
+    return NextResponse.redirect(`${baseUrl}/subscriptions/${id}?updated=true`)
   } catch (error: any) {
     console.error('Update billing interval error:', error)
     return NextResponse.json({ error: 'Failed to update billing interval' }, { status: 500 })

@@ -21,7 +21,9 @@ export async function POST(
       }
     })
 
-    return NextResponse.json({ success: true, subscription })
+    // Redirect back to subscriptions page
+    const baseUrl = process.env.ADMIN_URL || 'https://payloop-admin.onrender.com'
+    return NextResponse.redirect(`${baseUrl}/subscriptions?updated=true`)
   } catch (error: any) {
     console.error('Resume subscription error:', error)
     return NextResponse.json({ error: 'Failed to resume subscription' }, { status: 500 })
