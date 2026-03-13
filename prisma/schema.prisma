@@ -181,6 +181,12 @@ model Subscription {
   nmiVaultId      String?  // Legacy NMI vault ID
   basisTheoryTokenId String? // Basis Theory token for rebills
   
+  // 3DS data for rebills (Cycle 2+)
+  threeDSCavv     String?  // CAVV for cycle 2 rebill
+  threeDSXid      String?  // XID for cycle 2 rebill
+  threeDSEci      String?  // ECI for cycle 2 rebill
+  threeDSAuthDate DateTime? // Date of initial 3DS auth
+  
   status          String   @default("active") // active, paused, cancelled
   
   billingDay      Int      @default(1) // Day of month to bill
