@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
       sub.customer?.email || '',
       (sub.price || 0).toFixed(2),
       sub.status,
-      gatewayMap.get(sub.gatewayId) || 'Default',
+      sub.gatewayId ? (gatewayMap.get(sub.gatewayId) || 'Default') : 'Default',
       sub.threeDSCavv ? 'Yes' : 'No',
       sub.nextBillDate ? new Date(sub.nextBillDate).toISOString().split('T')[0] : '',
       sub.totalBills || 0,
