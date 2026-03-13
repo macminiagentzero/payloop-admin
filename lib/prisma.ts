@@ -29,3 +29,15 @@ async function migrateDatabase() {
 migrateDatabase().catch(err => {
   console.log('>>> Migration: Non-critical error -', err.message)
 })
+
+// Also export a function to check subscription count
+export async function getSubscriptionCount() {
+  try {
+    const count = await prisma.subscription.count()
+    console.log('>>> Subscription count:', count)
+    return count
+  } catch (error: any) {
+    console.error('>>> Error counting subscriptions:', error.message)
+    return 0
+  }
+}
