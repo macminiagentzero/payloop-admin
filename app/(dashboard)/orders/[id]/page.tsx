@@ -43,6 +43,8 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
   let transactions: any[] = []
   try {
     const subscriptionIds = subscriptions.map(s => s.id)
+    console.log('>>> Order:', id, 'Customer:', order.customerId)
+    console.log('>>> Subscription IDs:', subscriptionIds)
     transactions = await prisma.transaction.findMany({
       where: { 
         OR: [
@@ -53,8 +55,9 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
       orderBy: { createdAt: 'desc' },
       take: 50
     })
+    console.log('>>> Transactions found:', transactions.length)
   } catch (e) {
-    console.error(e)
+    console.error('>>> Error fetching transactions:', e)
   }
 
   let gateways: any[] = []
