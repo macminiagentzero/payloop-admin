@@ -4,22 +4,27 @@ import { useState } from 'react'
 
 interface Props {
   orderId: string
-  orderTotal: number
+  transactionId?: string
+  amount: number
+  label?: string
 }
 
-export default function RefundButton({ orderId, orderTotal }: Props) {
+export default function RefundButton({ orderId, transactionId, amount, label = 'Refund' }: Props) {
   const [loading, setLoading] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
 
   const handleRefund = async () => {
-    if (!confirm('Are you sure you want to refund this order?')) return
+    if (!confirm('Are you sure you want to refund this transaction?')) return
     
     setLoading(true)
     try {
       const res = await fetch(`/api/orders/${orderId}/refund`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: 'Requested by admin' })
+        body: JSON.stringify({ 
+          transactionId,
+          amount,
+          reason: 'Requested by admin' 
+        })
       })
       
       const data = await res.json()
@@ -35,7 +40,6 @@ export default function RefundButton({ orderId, orderTotal }: Props) {
       alert(`Refund failed: ${err.message || 'Network error'}`)
     } finally {
       setLoading(false)
-      setShowConfirm(false)
     }
   }
 
@@ -43,9 +47,9 @@ export default function RefundButton({ orderId, orderTotal }: Props) {
     <button
       onClick={handleRefund}
       disabled={loading}
-      className="px-4 py-2 text-sm font-medium rounded-lg bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      className="px-2 py-1 text-xs font-medium rounded bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      {loading ? 'Processing...' : 'Refund Order'}
+      {loading ? 'Processing...' : label}
     </button>
   )
 }

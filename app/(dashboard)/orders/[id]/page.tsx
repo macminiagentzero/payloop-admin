@@ -215,7 +215,11 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
                   {/* Refund Button - Only show for approved orders */}
                   {order.status === 'approved' && (
                     <div className="mt-4 pt-4 border-t border-slate-200">
-                      <RefundButton orderId={order.id} orderTotal={order.total} />
+                      <RefundButton 
+                        orderId={order.id} 
+                        amount={order.total}
+                        label="Refund Order"
+                      />
                     </div>
                   )}
                 </div>
@@ -400,6 +404,14 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
             </svg>
             3DS
           </span>
+        )}
+        {tx.status === 'approved' && tx.type !== 'refund' && (
+          <RefundButton 
+            orderId={order.id} 
+            transactionId={tx.transactionId}
+            amount={tx.amount}
+            label="Refund"
+          />
         )}
                       </div>
                       <div className="text-sm text-slate-500">

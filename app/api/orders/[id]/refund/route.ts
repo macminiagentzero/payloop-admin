@@ -14,14 +14,14 @@ export async function POST(
   try {
     const { id } = await params
     const body = await request.json()
-    const { amount, reason } = body
+    const { transactionId, amount, reason } = body
 
-    console.log('>>> Admin refund request for order:', id)
+    console.log('>>> Admin refund request for order:', id, 'transaction:', transactionId || 'initial')
 
     const response = await fetch(`${CHECKOUT_URL}/api/orders/${id}/refund`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount, reason })
+      body: JSON.stringify({ transactionId, amount, reason })
     })
 
     const data = await response.json()
