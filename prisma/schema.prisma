@@ -188,6 +188,8 @@ model Subscription {
   threeDSAuthDate DateTime? // Date of initial 3DS auth
   
   status          String   @default("active") // active, paused, cancelled
+  pausedAt        DateTime? // When subscription was paused
+  cancelledAt     DateTime? // When subscription was cancelled
   
   billingDay      Int      @default(1) // Day of month to bill
   nextBillDate    DateTime?
