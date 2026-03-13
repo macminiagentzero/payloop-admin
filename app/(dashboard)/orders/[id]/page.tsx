@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import InlinePriceEdit from '@/components/InlinePriceEdit'
+import RefundButton from '@/components/RefundButton'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -209,6 +210,12 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
                       <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">
                         {gateway.displayName || gateway.name}
                       </span>
+                    </div>
+                  )}
+                  {/* Refund Button - Only show for approved orders */}
+                  {order.status === 'approved' && (
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                      <RefundButton orderId={order.id} orderTotal={order.total} />
                     </div>
                   )}
                 </div>
