@@ -217,6 +217,9 @@ model Transaction {
   transactionId   String?  // NMI/processor transaction ID
   authCode       String?  // Authorization code
   
+  // 3DS data
+  cavv            String?  // CAVV if 3DS was used
+  
   status          String   @default("pending") // pending, approved, declined, refunded
   
   // Metadata
