@@ -14,9 +14,14 @@ async function migrateDatabase() {
     // Add cavv column to Transaction table if it doesn't exist
     await prisma.$executeRaw`ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "cavv" TEXT`
     console.log('>>> Migration: Transaction.cavv column ensured')
+    
+    // Add pausedAt and cancelledAt to Subscription table
+    await prisma.$executeRaw`ALTER TABLE "Subscription" ADD COLUMN IF NOT EXISTS "pausedAt" TIMESTAMP`
+    await prisma.$executeRaw`ALTER TABLE "Subscription" ADD COLUMN IF NOT EXISTS "cancelledAt" TIMESTAMP`
+    console.log('>>> Migration: Subscription pausedAt/cancelledAt columns ensured')
   } catch (error: any) {
-    // Log but don't crash - column might already exist
-    console.log('>>> Migration: Transaction.cavv -', error.message || 'skipped')
+    // Log but don't crash - columns might already exist
+    console.log('>>> Migration: Non-critical error -', error.message || 'skipped')
   }
 }
 
