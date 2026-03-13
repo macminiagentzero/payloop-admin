@@ -78,10 +78,42 @@ export async function GET() {
       CREATE INDEX IF NOT EXISTS idx_payment_gateway_type ON "PaymentGateway"(type)
     `
 
+    // Create Transaction table
+    const transactionTableCheck = await prisma.$queryRaw<Array<{ exists: boolean }>>`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = 'Transaction'
+      ) as exists
+    `
+    
+    if (!transactionTableCheck[0]?.exists) {
+      console.log('Creating Transaction table...')
+      await prisma.$executeRaw`
+        CREATE TABLE "Transaction" (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          "subscriptionId" UUID NOT NULL REFERENCES "Subscription"(id) ON DELETE CASCADE,
+          "orderId" UUID REFERENCES "Order"(id) ON DELETE SET NULL,
+          amount DECIMAL(10, 2) NOT NULL,
+          currency VARCHAR(10) DEFAULT 'USD',
+          "gatewayId" UUID,
+          "transactionId" VARCHAR(255),
+          "authCode" VARCHAR(255),
+          status VARCHAR(50) DEFAULT 'pending',
+          type VARCHAR(50) DEFAULT 'rebill',
+          description TEXT,
+          "createdAt" TIMESTAMP DEFAULT NOW()
+        )
+      `
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Transaction_subscriptionId_idx" ON "Transaction"("subscriptionId")`
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Transaction_orderId_idx" ON "Transaction"("orderId")`
+      await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "Transaction_createdAt_idx" ON "Transaction"("createdAt")`
+      console.log('Transaction table created')
+    }
+
     return NextResponse.json({ 
       success: true, 
       message: 'Database tables created successfully',
-      tables: ['ShopifyStore', 'ShopifyProduct', 'PaymentGateway']
+      tables: ['ShopifyStore', 'ShopifyProduct', 'PaymentGateway', 'Transaction']
     })
   } catch (error) {
     console.error('Init DB error:', error)
