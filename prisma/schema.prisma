@@ -181,7 +181,7 @@ model Subscription {
   nmiVaultId      String?  // Legacy NMI vault ID
   basisTheoryTokenId String? // Basis Theory token for rebills
   
-  // 3DS data for rebills (Cycle 2+)
+  // 3DS data for rebills
   threeDSCavv     String?  // CAVV for cycle 2 rebill
   threeDSXid      String?  // XID for cycle 2 rebill
   threeDSEci      String?  // ECI for cycle 2 rebill
@@ -236,4 +236,86 @@ model Transaction {
   @@index([subscriptionId])
   @@index([orderId])
   @@index([createdAt])
+}
+
+// ============================================
+// FUNNEL SYSTEM - Checkout Editor
+// ============================================
+
+// Funnel - A checkout funnel (store → checkout → upsell → thankyou)
+model Funnel {
+  id              String   @id @default(uuid())
+  name            String                    // "Main Store Checkout"
+  slug            String   @unique          // URL slug for checkout
+  storeId         String?                   // Shopify store ID if connected
+  isActive        Boolean  @default(true)
+  isDefault       Boolean  @default(false)
+  
+  // Domain configuration
+  customDomain    String?                   // Custom checkout domain
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  steps           FunnelStep[]
+  checkoutConfig  CheckoutConfig?
+}
+
+// FunnelStep - Steps in the funnel (checkout, upsell, thankyou)
+model FunnelStep {
+  id              String   @id @default(uuid())
+  funnelId        String
+  funnel          Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  
+  type            String                    // 'checkout', 'upsell', 'thankyou'
+  name            String                    // "Main Checkout", "Upsell 1", etc.
+  order           Int                       // Step order in funnel
+  
+  // Step configuration
+  config          Json?                     // Step-specific settings
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([funnelId])
+}
+
+// CheckoutConfig - Drag-drop checkout page configuration
+model CheckoutConfig {
+  id              String   @id @default(uuid())
+  funnelId        String   @unique
+  funnel          Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  
+  // Block order and visibility
+  blocks          Json                      // [{id, type, order, visible, props}]
+  
+  // Global styles
+  styles          Json?                     // {primaryColor, fontFamily, buttonRadius, etc.}
+  
+  // Content overrides
+  content         Json?                     // {title, subtitle, logoUrl, footerText, etc.}
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// CheckoutBlock - Predefined block definitions
+model CheckoutBlock {
+  id              String   @id @default(uuid())
+  type            String   @unique           // 'logo', 'hero', 'order-summary', 'payment-form', etc.
+  name            String                    // Display name
+  category        String                    // 'content', 'payment', 'trust', 'custom'
+  description     String?
+  
+  // Is this block required? (can't be deleted)
+  isRequired      Boolean  @default(false)
+  
+  // Default props for this block
+  defaultProps    Json?                     // {text: 'Welcome', style: {}}
+  
+  // UI hints for editor
+  icon            String?                   // Icon name for editor
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
