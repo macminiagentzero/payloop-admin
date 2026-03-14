@@ -12,9 +12,10 @@ export default function NewGatewayPage() {
   const [formData, setFormData] = useState({
     name: '',
     displayName: '',
-    type: 'NMI',
-    apiKey: '',
-    apiSecret: '',
+    type: 'nmi',
+    nmiSecurityKey: '',
+    nmiEndpoint: '',
+    nmiMerchantId: '',
     isActive: true,
     isDefault: false,
   })
@@ -77,7 +78,7 @@ export default function NewGatewayPage() {
               Gateway Type
             </label>
             <div className="grid grid-cols-3 gap-3">
-              {['NMI', 'STRIPE', 'PAYPAL'].map((type) => (
+              {['nmi', 'stripe', 'paypal'].map((type) => (
                 <button
                   key={type}
                   type="button"
@@ -89,9 +90,9 @@ export default function NewGatewayPage() {
                   }`}
                 >
                   <span className="text-2xl block mb-1">
-                    {type === 'STRIPE' ? '💳' : type === 'NMI' ? '🏦' : '🅿️'}
+                    {type === 'stripe' ? '💳' : type === 'nmi' ? '🏦' : '🅿️'}
                   </span>
-                  <span className="text-sm font-medium">{type}</span>
+                  <span className="text-sm font-medium">{type.toUpperCase()}</span>
                 </button>
               ))}
             </div>
@@ -130,36 +131,56 @@ export default function NewGatewayPage() {
             <p className="text-sm text-slate-500 mt-1">Used internally for API references</p>
           </div>
 
-          {/* API Key */}
-          <div>
-            <label htmlFor="apiKey" className="block text-sm font-medium text-slate-700 mb-2">
-              {formData.type === 'NMI' ? 'Security Key' : formData.type === 'STRIPE' ? 'API Key' : 'Client ID'}
-            </label>
-            <input
-              type="password"
-              id="apiKey"
-              value={formData.apiKey}
-              onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-              placeholder={formData.type === 'NMI' ? 'NMI Security Key' : formData.type === 'STRIPE' ? 'sk_live_...' : 'PayPal Client ID'}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
-          </div>
+          {/* NMI Security Key */}
+          {formData.type === 'nmi' && (
+            <>
+              <div>
+                <label htmlFor="nmiSecurityKey" className="block text-sm font-medium text-slate-700 mb-2">
+                  NMI Security Key
+                </label>
+                <input
+                  type="password"
+                  id="nmiSecurityKey"
+                  value={formData.nmiSecurityKey}
+                  onChange={(e) => setFormData({ ...formData, nmiSecurityKey: e.target.value })}
+                  placeholder="NMI Security Key"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <label htmlFor="nmiEndpoint" className="block text-sm font-medium text-slate-700 mb-2">
+                  NMI Endpoint (optional)
+                </label>
+                <input
+                  type="text"
+                  id="nmiEndpoint"
+                  value={formData.nmiEndpoint}
+                  onChange={(e) => setFormData({ ...formData, nmiEndpoint: e.target.value })}
+                  placeholder="https://seamlesschex.transactiongateway.com/api/transact.php"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="nmiMerchantId" className="block text-sm font-medium text-slate-700 mb-2">
+                  Merchant ID (optional)
+                </label>
+                <input
+                  type="text"
+                  id="nmiMerchantId"
+                  value={formData.nmiMerchantId}
+                  onChange={(e) => setFormData({ ...formData, nmiMerchantId: e.target.value })}
+                  placeholder="500001750"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+              </div>
+            </>
+          )}
 
-          {/* API Secret - only for Stripe/PayPal */}
-          {formData.type !== 'NMI' && (
-            <div>
-              <label htmlFor="apiSecret" className="block text-sm font-medium text-slate-700 mb-2">
-                {formData.type === 'STRIPE' ? 'Secret Key' : 'Client Secret'}
-              </label>
-              <input
-                type="password"
-                id="apiSecret"
-                value={formData.apiSecret}
-                onChange={(e) => setFormData({ ...formData, apiSecret: e.target.value })}
-                placeholder={formData.type === 'STRIPE' ? 'sk_live_...' : 'PayPal Client Secret'}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
+          {/* Stripe/PayPal fields - placeholder for future */}
+          {formData.type !== 'nmi' && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-700">
+              <strong>{formData.type.toUpperCase()}</strong> integration coming soon. Contact support to add this gateway manually.
             </div>
           )}
 

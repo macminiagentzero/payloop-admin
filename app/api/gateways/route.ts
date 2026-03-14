@@ -31,12 +31,20 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { name, displayName, type, apiKey, apiSecret, isActive, isDefault } = body
+    const { name, displayName, type, nmiSecurityKey, nmiEndpoint, nmiMerchantId, isActive, isDefault } = body
 
     // Validate required fields
-    if (!name || !displayName || !type || !apiKey) {
+    if (!name || !displayName || !type) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: name, displayName, type' },
+        { status: 400 }
+      )
+    }
+
+    // For NMI, require security key
+    if (type === 'nmi' && !nmiSecurityKey) {
+      return NextResponse.json(
+        { error: 'NMI gateways require nmiSecurityKey' },
         { status: 400 }
       )
     }
@@ -52,8 +60,8 @@ export async function POST(request: NextRequest) {
 
     // Insert the new gateway
     await prisma.$executeRaw`
-      INSERT INTO "PaymentGateway" (id, name, "displayName", type, "apiKey", "apiSecret", "isActive", "isDefault", "createdAt", "updatedAt")
-      VALUES (gen_random_uuid(), ${name}, ${displayName}, ${type}, ${apiKey}, ${apiSecret || ''}, ${isActive}, ${isDefault}, NOW(), NOW())
+      INSERT INTO "PaymentGateway" (id, name, "displayName", type, "nmiSecurityKey", "nmiEndpoint", "nmiMerchantId", "isActive", "isDefault", "createdAt", "updatedAt")
+      VALUES (gen_random_uuid(), ${name}, ${displayName}, ${type}, ${nmiSecurityKey || null}, ${nmiEndpoint || null}, ${nmiMerchantId || null}, ${isActive ?? true}, ${isDefault ?? false}, NOW(), NOW())
     `
 
     return NextResponse.json({ success: true })
