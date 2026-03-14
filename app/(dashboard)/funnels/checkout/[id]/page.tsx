@@ -320,6 +320,7 @@ export default function CheckoutEditorPage({ params }: { params: { id: string } 
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [activeTab, setActiveTab] = useState<'blocks' | 'styles' | 'content'>('blocks');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -327,6 +328,30 @@ export default function CheckoutEditorPage({ params }: { params: { id: string } 
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  // Load config from API
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const response = await fetch(`/api/funnels/${params.id}/checkout`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.blocks && data.blocks.length > 0) {
+            setConfig({
+              blocks: data.blocks,
+              styles: data.styles || DEFAULT_STYLES,
+              content: data.content || DEFAULT_CONTENT,
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load config:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadConfig();
+  }, [params.id]);
 
   // Drag end handler
   const handleDragEnd = (event: DragEndEvent) => {
@@ -407,11 +432,24 @@ export default function CheckoutEditorPage({ params }: { params: { id: string } 
   const saveConfig = async () => {
     setIsSaving(true);
     try {
-      // TODO: Call API to save
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`/api/funnels/${params.id}/checkout`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blocks: config.blocks,
+          styles: config.styles,
+          content: config.content,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save');
+      }
+
       alert('Configuration saved!');
     } catch (error) {
-      alert('Failed to save');
+      console.error('Save error:', error);
+      alert('Failed to save configuration');
     } finally {
       setIsSaving(false);
     }
@@ -419,6 +457,14 @@ export default function CheckoutEditorPage({ params }: { params: { id: string } 
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {isLoading && (
+        <div className="fixed inset-0 bg-white z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading checkout editor...</p>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="max-w-[1600px] mx-auto px-6 py-4 flex items-center justify-between">
