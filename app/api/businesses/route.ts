@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Auto-generate default domain
-    const defaultDomain = `${slug}.checkout.payloop.onrender.com`
+    const defaultDomain = `${slug}.checkout.mypayloop.co`
 
     // Check if defaultDomain already exists
     const existingDefaultDomain = await prisma.business.findUnique({
