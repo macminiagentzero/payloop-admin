@@ -10,12 +10,12 @@ export async function POST() {
 
   try {
     // Add decline columns to Transaction table
-    await prisma.$executeRaw`
-      ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "declineCode" TEXT
-    `
-    await prisma.$executeRaw`
-      ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "declineReason" TEXT
-    `
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "declineCode" TEXT'
+    )
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "declineReason" TEXT'
+    )
     
     return NextResponse.json({ 
       success: true, 
