@@ -161,6 +161,28 @@ export async function POST() {
       results.push(`! PaymentGateway constraint: ${e.message}`)
     }
 
+    // Step 10: Add new fields to Business table
+    try {
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "customDomain" TEXT
+      `)
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "shopifyDomain" TEXT
+      `)
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "logoUrl" TEXT
+      `)
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "primaryColor" TEXT
+      `)
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "accentColor" TEXT
+      `)
+      results.push('✓ Business customization fields added')
+    } catch (e: any) {
+      results.push(`! Business fields: ${e.message}`)
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Multi-business migration complete',

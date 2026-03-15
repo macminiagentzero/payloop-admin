@@ -13,12 +13,20 @@ datasource db {
 // ============================================
 
 model Business {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique // URL-friendly identifier
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  slug         String   @unique
+  customDomain String?  @unique  // checkout.mellone.co
+  shopifyDomain String?           // mellone.myshopify.com
+  
+  // Branding
+  logoUrl      String?
+  primaryColor String?  @default("#4F46E5")  // Indigo
+  accentColor  String?  @default("#7C3AED")  // Purple
+  
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   users          UserBusiness[]
@@ -30,8 +38,8 @@ model Business {
   products       SubscriptionProduct[]
   funnels        Funnel[]
   settings       BusinessSetting[]
-  syncedProducts SyncedProduct[]
-  shopifyCarts   ShopifyCart[]
+  syncedProducts  SyncedProduct[]
+  shopifyCarts    ShopifyCart[]
 }
 
 // User-Business relationship (a user can belong to multiple businesses)
