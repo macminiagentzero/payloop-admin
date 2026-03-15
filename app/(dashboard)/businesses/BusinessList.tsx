@@ -19,6 +19,7 @@ interface Business {
     subscriptions: number
     customers: number
   }
+  dnsConfigured?: boolean
 }
 
 interface Props {
@@ -40,6 +41,15 @@ export default function BusinessList({ businesses }: Props) {
     primaryColor: '#4F46E5',
     accentColor: '#7C3AED'
   })
+  
+  const [verifyingDomain, setVerifyingDomain] = useState<string | null>(null)
+  const [dnsResult, setDnsResult] = useState<{
+    domain: string
+    configured: boolean
+    actual?: string
+    expected?: string
+    instructions?: { steps: string[] }
+  } | null>(null)
 
   const resetForm = () => {
     setFormData({
@@ -50,6 +60,26 @@ export default function BusinessList({ businesses }: Props) {
       primaryColor: '#4F46E5',
       accentColor: '#7C3AED'
     })
+  }
+  
+  const verifyDNS = async (domain: string) => {
+    setVerifyingDomain(domain)
+    setDnsResult(null)
+    try {
+      const res = await fetch(`/api/businesses/verify-dns?domain=${encodeURIComponent(domain)}`)
+      const data = await res.json()
+      setDnsResult(data)
+    } catch (err) {
+      setDnsResult({
+        domain,
+        configured: false,
+        instructions: {
+          steps: ['Could not verify DNS. Please try again.']
+        }
+      })
+    } finally {
+      setVerifyingDomain(null)
+    }
   }
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -416,6 +446,7 @@ export default function BusinessList({ businesses }: Props) {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Business</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Domain</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">DNS Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Shopify</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Stats</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
@@ -446,6 +477,19 @@ export default function BusinessList({ businesses }: Props) {
                     )}
                   </td>
                   <td className="px-6 py-4">
+                    {business.customDomain ? (
+                      <button
+                        onClick={() => verifyDNS(business.customDomain!)}
+                        disabled={verifyingDomain === business.customDomain}
+                        className="text-sm text-indigo-600 hover:text-indigo-900 disabled:text-slate-400"
+                      >
+                        {verifyingDomain === business.customDomain ? 'Verifying...' : 'Verify DNS'}
+                      </button>
+                    ) : (
+                      <span className="text-sm text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
                     {business.shopifyDomain ? (
                       <span className="text-sm text-slate-900">{business.shopifyDomain}</span>
                     ) : (
@@ -471,6 +515,71 @@ export default function BusinessList({ businesses }: Props) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      {/* DNS Verification Result Modal */}
+      {dnsResult && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setDnsResult(null)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">DNS Verification</h3>
+              <button onClick={() => setDnsResult(null)} className="text-slate-400 hover:text-slate-600">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {dnsResult.configured ? (
+              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
+                <svg className="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <div>
+                  <p className="font-medium text-green-800">DNS Configured Correctly</p>
+                  <p className="text-sm text-green-600">
+                    {dnsResult.domain} → {dnsResult.actual}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center gap-3 p-4 bg-red-50 rounded-lg mb-4">
+                  <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div>
+                    <p className="font-medium text-red-800">DNS Not Configured</p>
+                    {dnsResult.actual && (
+                      <p className="text-sm text-red-600">
+                        Found: {dnsResult.actual} (expected: {dnsResult.expected})
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                {dnsResult.instructions && (
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h4 className="font-medium text-slate-900 mb-2">Setup Instructions</h4>
+                    <ol className="list-decimal list-inside space-y-2 text-sm text-slate-600">
+                      {dnsResult.instructions.steps.map((step, i) => (
+                        <li key={i}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setDnsResult(null)}
+                className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
