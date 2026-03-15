@@ -118,11 +118,8 @@ export async function POST(
         }
       })
 
-      return NextResponse.json({
-        success: true,
-        transaction,
-        message: `Charged $${subscription.price.toFixed(2)} successfully`
-      })
+      // Redirect back to subscription page with success message
+      return NextResponse.redirect(new URL(`/subscriptions/${id}?success=Charged $${subscription.price.toFixed(2)} successfully`, request.url))
 
     } else {
       // Failed
@@ -140,21 +137,15 @@ export async function POST(
         }
       })
 
-      return NextResponse.json({
-        success: false,
-        error: result.error || result.message || 'Charge failed',
-        declineCode: result.response_code,
-        transaction
-      }, { status: 400 })
+      // Redirect back with error message
+      return NextResponse.redirect(new URL(`/subscriptions/${id}?error=${encodeURIComponent(result.error || result.message || 'Charge failed')}`, request.url))
     }
 
   } catch (error) {
     console.error('Manual charge error:', error)
-    return NextResponse.json({ 
-      error: 'Failed to process charge',
-      details: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
-    }, { status: 500 })
+    // Redirect back with error
+    const id = await props.params.then(p => p.id)
+    return NextResponse.redirect(new URL(`/subscriptions/${id}?error=${encodeURIComponent(error instanceof Error ? error.message : 'Failed to process charge')}`, request.url))
   }
 }
 

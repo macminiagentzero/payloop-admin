@@ -3,8 +3,9 @@ import { notFound } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
-export default async function SubscriptionDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function SubscriptionDetailPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ success?: string; error?: string }> }) {
   const { id } = await params
+  const { success, error } = await searchParams
   
   let subscription: any = null
   let transactions: any[] = []
@@ -35,6 +36,18 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Success/Error Messages */}
+        {success && (
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800 font-medium">{success}</p>
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 font-medium">{error}</p>
+          </div>
+        )}
+        
         {/* Back link */}
         <a href="/subscriptions" className="inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 mb-6">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,6 +66,11 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
             <div className="flex gap-2">
               {subscription.status === 'active' && (
                 <>
+                  <form action={`/api/subscriptions/${id}/charge`} method="POST">
+                    <button className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+                      Charge Now
+                    </button>
+                  </form>
                   <form action={`/api/subscriptions/${id}/pause`} method="POST">
                     <button className="px-4 py-2 text-sm font-medium rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200 transition-colors">
                       Pause
