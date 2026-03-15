@@ -10,6 +10,9 @@ interface Business {
   customDomain: string | null
   defaultDomain: string | null
   shopifyDomain: string | null
+  shopifyStorefrontToken: string | null
+  shopifyAdminToken: string | null
+  shopifyWebhookSecret: string | null
   logoUrl: string | null
   primaryColor: string | null
   accentColor: string | null
@@ -38,6 +41,9 @@ export default function BusinessList({ businesses }: Props) {
     slug: '',
     customDomain: '',
     shopifyDomain: '',
+    shopifyStorefrontToken: '',
+    shopifyAdminToken: '',
+    shopifyWebhookSecret: '',
     primaryColor: '#4F46E5',
     accentColor: '#7C3AED'
   })
@@ -65,6 +71,9 @@ export default function BusinessList({ businesses }: Props) {
       slug: '',
       customDomain: '',
       shopifyDomain: '',
+      shopifyStorefrontToken: '',
+      shopifyAdminToken: '',
+      shopifyWebhookSecret: '',
       primaryColor: '#4F46E5',
       accentColor: '#7C3AED'
     })
@@ -123,6 +132,9 @@ export default function BusinessList({ businesses }: Props) {
           slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
           customDomain: formData.customDomain || null,
           shopifyDomain: formData.shopifyDomain || null,
+          shopifyStorefrontToken: formData.shopifyStorefrontToken || null,
+          shopifyAdminToken: formData.shopifyAdminToken || null,
+          shopifyWebhookSecret: formData.shopifyWebhookSecret || null,
           primaryColor: formData.primaryColor,
           accentColor: formData.accentColor
         })
@@ -159,6 +171,9 @@ export default function BusinessList({ businesses }: Props) {
           slug: formData.slug,
           customDomain: formData.customDomain || null,
           shopifyDomain: formData.shopifyDomain || null,
+          shopifyStorefrontToken: formData.shopifyStorefrontToken || null,
+          shopifyAdminToken: formData.shopifyAdminToken || null,
+          shopifyWebhookSecret: formData.shopifyWebhookSecret || null,
           primaryColor: formData.primaryColor,
           accentColor: formData.accentColor
         })
@@ -186,6 +201,9 @@ export default function BusinessList({ businesses }: Props) {
       slug: business.slug,
       customDomain: business.customDomain || '',
       shopifyDomain: business.shopifyDomain || '',
+      shopifyStorefrontToken: business.shopifyStorefrontToken || '',
+      shopifyAdminToken: business.shopifyAdminToken || '',
+      shopifyWebhookSecret: business.shopifyWebhookSecret || '',
       primaryColor: business.primaryColor || '#4F46E5',
       accentColor: business.accentColor || '#7C3AED'
     })
@@ -248,6 +266,43 @@ export default function BusinessList({ businesses }: Props) {
                   placeholder="my-store"
                 />
                 <p className="text-xs text-slate-500 mt-1">Auto-generated from name if empty</p>
+              </div>
+            </div>
+
+            {/* Shopify Credentials Section */}
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <h4 className="text-sm font-medium text-slate-700 mb-3">Shopify Credentials (Optional)</h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm text-slate-600 mb-1">Storefront API Token</label>
+                  <input
+                    type="password"
+                    value={formData.shopifyStorefrontToken}
+                    onChange={(e) => setFormData({ ...formData, shopifyStorefrontToken: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    placeholder="shpat_..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-600 mb-1">Admin API Token</label>
+                  <input
+                    type="password"
+                    value={formData.shopifyAdminToken}
+                    onChange={(e) => setFormData({ ...formData, shopifyAdminToken: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    placeholder="shpat_..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-600 mb-1">Webhook Secret</label>
+                  <input
+                    type="password"
+                    value={formData.shopifyWebhookSecret}
+                    onChange={(e) => setFormData({ ...formData, shopifyWebhookSecret: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    placeholder="Used to verify webhooks"
+                  />
+                </div>
               </div>
             </div>
 
@@ -363,6 +418,43 @@ export default function BusinessList({ businesses }: Props) {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   required
                 />
+              </div>
+            </div>
+
+            {/* Shopify Credentials Section */}
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <h4 className="text-sm font-medium text-slate-700 mb-3">Shopify Credentials (Optional)</h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm text-slate-600 mb-1">Storefront API Token</label>
+                  <input
+                    type="password"
+                    value={formData.shopifyStorefrontToken}
+                    onChange={(e) => setFormData({ ...formData, shopifyStorefrontToken: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    placeholder="shpat_..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-600 mb-1">Admin API Token</label>
+                  <input
+                    type="password"
+                    value={formData.shopifyAdminToken}
+                    onChange={(e) => setFormData({ ...formData, shopifyAdminToken: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    placeholder="shpat_..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-600 mb-1">Webhook Secret</label>
+                  <input
+                    type="password"
+                    value={formData.shopifyWebhookSecret}
+                    onChange={(e) => setFormData({ ...formData, shopifyWebhookSecret: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                    placeholder="Used to verify webhooks"
+                  />
+                </div>
               </div>
             </div>
 

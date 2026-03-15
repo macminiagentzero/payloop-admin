@@ -17,13 +17,18 @@ model Business {
   name         String
   slug         String   @unique
   customDomain String?  @unique  // checkout.mellone.co (user's custom domain)
-  defaultDomain String?  @unique   // auto-generated: slug.checkout.payloop.onrender.com
+  defaultDomain String?  @unique   // auto-generated: slug.checkout.mypayloop.co
   shopifyDomain String?           // mellone.myshopify.com
+  
+  // Shopify Credentials (per business)
+  shopifyStorefrontToken String?  // Storefront API token
+  shopifyAdminToken      String?   // Admin API token
+  shopifyWebhookSecret   String?   // Webhook verification secret
   
   // Branding
   logoUrl      String?
   primaryColor String?  @default("#4F46E5")  // Indigo
-  accentColor  String?  @default("#7C3ED")  // Purple
+  accentColor  String?  @default("#7C3AED")  // Purple
   
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())

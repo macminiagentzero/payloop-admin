@@ -46,6 +46,9 @@ export async function POST(request: NextRequest) {
       slug, 
       customDomain, 
       shopifyDomain,
+      shopifyStorefrontToken,
+      shopifyAdminToken,
+      shopifyWebhookSecret,
       primaryColor,
       accentColor,
       logoUrl 
@@ -117,6 +120,9 @@ export async function POST(request: NextRequest) {
         defaultDomain, // Auto-generated
         customDomain: customDomain || null,
         shopifyDomain: shopifyDomain || null,
+        shopifyStorefrontToken: shopifyStorefrontToken || null,
+        shopifyAdminToken: shopifyAdminToken || null,
+        shopifyWebhookSecret: shopifyWebhookSecret || null,
         primaryColor: primaryColor || '#4F46E5',
         accentColor: accentColor || '#7C3AED',
         logoUrl: logoUrl || null,
@@ -139,7 +145,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, name, slug, customDomain, shopifyDomain, primaryColor, accentColor, logoUrl, isActive } = body
+    const { id, name, slug, customDomain, shopifyDomain, shopifyStorefrontToken, shopifyAdminToken, shopifyWebhookSecret, primaryColor, accentColor, logoUrl, isActive } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
@@ -189,6 +195,9 @@ export async function PATCH(request: NextRequest) {
     if (slug !== undefined) updateData.slug = slug
     if (customDomain !== undefined) updateData.customDomain = customDomain || null
     if (shopifyDomain !== undefined) updateData.shopifyDomain = shopifyDomain || null
+    if (shopifyStorefrontToken !== undefined) updateData.shopifyStorefrontToken = shopifyStorefrontToken || null
+    if (shopifyAdminToken !== undefined) updateData.shopifyAdminToken = shopifyAdminToken || null
+    if (shopifyWebhookSecret !== undefined) updateData.shopifyWebhookSecret = shopifyWebhookSecret || null
     if (primaryColor !== undefined) updateData.primaryColor = primaryColor
     if (accentColor !== undefined) updateData.accentColor = accentColor
     if (logoUrl !== undefined) updateData.logoUrl = logoUrl || null

@@ -182,10 +182,26 @@ export async function POST() {
         ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "accentColor" TEXT
       `)
       
+      // Add Shopify credential columns
+      try {
+        await prisma.$executeRawUnsafe(`
+          ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "shopifyStorefrontToken" TEXT
+        `)
+        await prisma.$executeRawUnsafe(`
+          ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "shopifyAdminToken" TEXT
+        `)
+        await prisma.$executeRawUnsafe(`
+          ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "shopifyWebhookSecret" TEXT
+        `)
+        results.push('✓ Shopify credential fields added')
+      } catch (e: any) {
+        results.push(`! Shopify fields: ${e.message}`)
+      }
+      
       // Set defaultDomain for existing businesses that don't have it
       await prisma.$executeRawUnsafe(`
         UPDATE "Business" 
-        SET "defaultDomain" = 'default.checkout.payloop.onrender.com'
+        SET "defaultDomain" = 'default.checkout.mypayloop.co'
         WHERE "defaultDomain" IS NULL AND slug = 'default'
       `)
       
