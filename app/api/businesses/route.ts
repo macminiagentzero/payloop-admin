@@ -49,9 +49,6 @@ export async function POST(request: NextRequest) {
       shopifyStorefrontToken,
       shopifyAdminToken,
       shopifyWebhookSecret,
-      stripeApiKey,
-      stripeWebhookSecret,
-      checkoutType,
       primaryColor,
       accentColor,
       logoUrl 
@@ -126,9 +123,6 @@ export async function POST(request: NextRequest) {
         shopifyStorefrontToken: shopifyStorefrontToken || null,
         shopifyAdminToken: shopifyAdminToken || null,
         shopifyWebhookSecret: shopifyWebhookSecret || null,
-        stripeApiKey: stripeApiKey || null,
-        stripeWebhookSecret: stripeWebhookSecret || null,
-        checkoutType: checkoutType || 'nmi-vault-3ds',
         primaryColor: primaryColor || '#4F46E5',
         accentColor: accentColor || '#7C3AED',
         logoUrl: logoUrl || null,
@@ -151,7 +145,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, name, slug, customDomain, shopifyDomain, shopifyStorefrontToken, shopifyAdminToken, shopifyWebhookSecret, stripeApiKey, stripeWebhookSecret, checkoutType, primaryColor, accentColor, logoUrl, isActive } = body
+    const { id, name, slug, customDomain, shopifyDomain, shopifyStorefrontToken, shopifyAdminToken, shopifyWebhookSecret, primaryColor, accentColor, logoUrl, isActive } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
@@ -204,9 +198,6 @@ export async function PATCH(request: NextRequest) {
     if (shopifyStorefrontToken !== undefined) updateData.shopifyStorefrontToken = shopifyStorefrontToken || null
     if (shopifyAdminToken !== undefined) updateData.shopifyAdminToken = shopifyAdminToken || null
     if (shopifyWebhookSecret !== undefined) updateData.shopifyWebhookSecret = shopifyWebhookSecret || null
-    if (stripeApiKey !== undefined) updateData.stripeApiKey = stripeApiKey || null
-    if (stripeWebhookSecret !== undefined) updateData.stripeWebhookSecret = stripeWebhookSecret || null
-    if (checkoutType !== undefined) updateData.checkoutType = checkoutType
     if (primaryColor !== undefined) updateData.primaryColor = primaryColor
     if (accentColor !== undefined) updateData.accentColor = accentColor
     if (logoUrl !== undefined) updateData.logoUrl = logoUrl || null
