@@ -470,11 +470,18 @@ export default function BusinessList({ businesses }: Props) {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    {business.customDomain ? (
-                      <span className="text-sm text-slate-900">{business.customDomain}</span>
-                    ) : (
-                      <span className="text-sm text-slate-400">Not set</span>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {business.customDomain ? (
+                        <span className="text-sm text-slate-900">{business.customDomain}</span>
+                      ) : (
+                        <span className="text-sm text-slate-400">No custom domain</span>
+                      )}
+                      {business.defaultDomain && (
+                        <span className="text-xs text-slate-500">
+                          Default: {business.defaultDomain}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     {business.customDomain ? (

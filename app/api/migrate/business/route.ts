@@ -167,6 +167,9 @@ export async function POST() {
         ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "customDomain" TEXT
       `)
       await prisma.$executeRawUnsafe(`
+        ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "defaultDomain" TEXT
+      `)
+      await prisma.$executeRawUnsafe(`
         ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "shopifyDomain" TEXT
       `)
       await prisma.$executeRawUnsafe(`
@@ -178,6 +181,14 @@ export async function POST() {
       await prisma.$executeRawUnsafe(`
         ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "accentColor" TEXT
       `)
+      
+      // Set defaultDomain for existing businesses that don't have it
+      await prisma.$executeRawUnsafe(`
+        UPDATE "Business" 
+        SET "defaultDomain" = 'default.checkout.payloop.onrender.com'
+        WHERE "defaultDomain" IS NULL AND slug = 'default'
+      `)
+      
       results.push('✓ Business customization fields added')
     } catch (e: any) {
       results.push(`! Business fields: ${e.message}`)

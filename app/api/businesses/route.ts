@@ -94,11 +94,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Auto-generate default domain
+    const defaultDomain = `${slug}.checkout.payloop.onrender.com`
+
+    // Check if defaultDomain already exists
+    const existingDefaultDomain = await prisma.business.findUnique({
+      where: { defaultDomain }
+    })
+
+    if (existingDefaultDomain) {
+      return NextResponse.json(
+        { error: 'A business with this slug already exists' },
+        { status: 400 }
+      )
+    }
+
     // Create the business
     const business = await prisma.business.create({
       data: {
         name,
         slug,
+        defaultDomain, // Auto-generated
         customDomain: customDomain || null,
         shopifyDomain: shopifyDomain || null,
         primaryColor: primaryColor || '#4F46E5',
