@@ -5,22 +5,26 @@ import { prisma } from '@/lib/prisma'
  * 
  * For now, returns the default business (single-tenant setup)
  * In the future, this will get the business from session/cookie
+ * 
+ * Returns null if Business table doesn't exist (pre-migration)
  */
 export async function getCurrentBusinessId(): Promise<string | null> {
   try {
-    // For now, get the default business by slug
-    // In the future, this will come from session: session.businessId
+    // Try to get the default business
+    // This will fail gracefully if the Business table doesn't exist yet
     const business = await prisma.business.findFirst({
-      where: { 
-        OR: [
-          { slug: 'default' }
-        ]
-      },
+      where: { slug: 'default' },
       select: { id: true }
     })
     
     return business?.id || null
-  } catch (error) {
+  } catch (error: any) {
+    // If Business table doesn't exist (P2021), return null
+    // This allows the app to work before migration is run
+    if (error.code === 'P2021' || error.message?.includes('does not exist')) {
+      console.log('Business table not found - returning null (run migration first)')
+      return null
+    }
     console.error('Error getting current business:', error)
     return null
   }
@@ -31,21 +35,29 @@ export async function getCurrentBusinessId(): Promise<string | null> {
  * Used during migration and first-run setup
  */
 export async function getOrCreateDefaultBusiness(): Promise<string> {
-  let business = await prisma.business.findFirst({
-    where: { slug: 'default' }
-  })
-  
-  if (!business) {
-    business = await prisma.business.create({
-      data: {
-        name: 'Default Business',
-        slug: 'default',
-        isActive: true
-      }
+  try {
+    let business = await prisma.business.findFirst({
+      where: { slug: 'default' }
     })
+    
+    if (!business) {
+      business = await prisma.business.create({
+        data: {
+          name: 'Default Business',
+          slug: 'default',
+          isActive: true
+        }
+      })
+    }
+    
+    return business.id
+  } catch (error: any) {
+    // If table doesn't exist, throw a helpful error
+    if (error.code === 'P2021') {
+      throw new Error('Business table does not exist. Run the migration first.')
+    }
+    throw error
   }
-  
-  return business.id
 }
 
 /**
