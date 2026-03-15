@@ -12,21 +12,34 @@ export async function POST() {
     // Find businesses with old defaultDomain pattern
     const businesses = await prisma.business.findMany({
       where: {
-        defaultDomain: { contains: '.onrender.com' }
+        OR: [
+          { defaultDomain: { contains: '.onrender.com' } },
+          { defaultDomain: { contains: 'payloop.onrender' } }
+        ]
       }
     })
 
     const updates = []
     
     for (const business of businesses) {
-      const newDomain = business.defaultDomain!.replace('.onrender.com', '.mypayloop.co')
+      // Fix: {slug}.checkout.payloop.onrender.com → {slug}.checkout.mypayloop.co
+      let newDomain = business.defaultDomain!
+      
+      // Remove old patterns
+      newDomain = newDomain.replace('.checkout.payloop.onrender.com', '.checkout.mypayloop.co')
+      newDomain = newDomain.replace('.onrender.com', '.mypayloop.co')
       
       await prisma.business.update({
         where: { id: business.id },
         data: { defaultDomain: newDomain }
       })
       
-      updates.push({ id: business.id, name: business.name, old: business.defaultDomain, new: newDomain })
+      updates.push({ 
+        id: business.id, 
+        name: business.name, 
+        old: business.defaultDomain, 
+        new: newDomain 
+      })
     }
 
     return NextResponse.json({
