@@ -161,13 +161,18 @@ export async function POST(
 // Charge via Basis Theory Proxy
 async function chargeViaBasisTheory(subscription: any, gateway: any) {
   const BT_PRIVATE_KEY = process.env.BT_PRIVATE_KEY
-  const NMI_ENDPOINT = gateway.nmiEndpoint || 'secure.safewebservices.com'
   
   if (!BT_PRIVATE_KEY) {
     return { success: false, error: 'Basis Theory not configured' }
   }
 
   console.log('[Manual Charge] Charging via Basis Theory Proxy...')
+  console.log('[Manual Charge] Token:', subscription.basisTheoryTokenId)
+  console.log('[Manual Charge] Gateway:', gateway.name)
+  console.log('[Manual Charge] Has CAVV:', !!subscription.threeDSCavv)
+
+  // Basis Theory proxy requires specific endpoint
+  const NMI_PROXY_URL = 'https://secure.safewebservices.com/api/transact.php'
 
   const nmiData = new URLSearchParams({
     type: 'sale',
@@ -182,7 +187,7 @@ async function chargeViaBasisTheory(subscription: any, gateway: any) {
     initiator: 'merchant',
     orderid: `manual_${subscription.id}_${Date.now()}`,
     order_description: `Manual charge: ${subscription.name || 'Subscription'}`,
-    // 3DS data
+    // 3DS data for liability shift
     ...(subscription.threeDSCavv && {
       cardholder_auth: 'verified',
       cavv: subscription.threeDSCavv,
@@ -191,12 +196,14 @@ async function chargeViaBasisTheory(subscription: any, gateway: any) {
     })
   })
 
+  console.log('[Manual Charge] Request to Basis Theory Proxy...')
+
   try {
     const response = await fetch('https://api.basistheory.com/proxy', {
       method: 'POST',
       headers: {
         'BT-API-KEY': BT_PRIVATE_KEY,
-        'BT-PROXY-URL': `https://${NMI_ENDPOINT}/api/transact.php`,
+        'BT-PROXY-URL': NMI_PROXY_URL,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: nmiData
