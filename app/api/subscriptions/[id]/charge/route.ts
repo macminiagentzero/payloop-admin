@@ -5,7 +5,7 @@ import { isAuthenticated } from '@/lib/auth'
 // POST /api/subscriptions/:id/charge
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  props: { params: Promise<{ id: string }> }
 ) {
   const auth = await isAuthenticated()
   if (!auth) {
@@ -13,7 +13,7 @@ export async function POST(
   }
 
   try {
-    const { id } = await params
+    const { id } = await props.params
 
     const subscription = await prisma.subscription.findUnique({
       where: { id },
@@ -33,7 +33,7 @@ export async function POST(
         businessId: subscription.businessId,
         isActive: true,
         OR: [
-          { id: subscription.gatewayId },
+          ...(subscription.gatewayId ? [{ id: subscription.gatewayId }] : []),
           { isDefault: true }
         ]
       }
@@ -46,26 +46,26 @@ export async function POST(
     // Charge using stored CAVV
     const NMI_URL = `https://${gateway.nmiEndpoint || 'seamlesschex.transactiongateway.com'}/api/transact.php`
     
-    const params = new URLSearchParams({
-      username: gateway.nmiSecurityKey,
+    const body = new URLSearchParams({
+      username: gateway.nmiSecurityKey || '',
       password: '',
       type: 'sale',
       amount: subscription.price.toFixed(2),
-      customer_vault_id: subscription.paymentMethodId || '',
-      cardholder_auth: subscription.cavv ? 'verified' : '',
-      cavv: subscription.cavv || '',
+      customer_vault_id: subscription.nmiVaultId || '',
+      cardholder_auth: subscription.threeDSCavv ? 'verified' : '',
+      cavv: subscription.threeDSCavv || '',
       email: subscription.customer?.email || '',
       first_name: subscription.customer?.firstName || '',
       last_name: subscription.customer?.lastName || '',
       orderid: `manual_${subscription.id}_${Date.now()}`,
-      order_description: `Manual charge: ${subscription.name}`
+      order_description: `Manual charge: ${subscription.name || 'Subscription'}`
     })
 
     console.log(`[Manual Charge] Charging subscription ${subscription.id}: $${subscription.price}`)
 
     const response = await fetch(NMI_URL, {
       method: 'POST',
-      body: params
+      body
     })
 
     const text = await response.text()
@@ -76,16 +76,15 @@ export async function POST(
       const transaction = await prisma.transaction.create({
         data: {
           businessId: subscription.businessId,
-          customerId: subscription.customerId,
           subscriptionId: subscription.id,
           orderId: subscription.orderId,
           amount: subscription.price,
-          status: 'success',
+          status: 'approved',
           type: 'manual',
           gatewayId: gateway.id,
-          nmiTransactionId: result.transactionid,
-          nmiAuthCode: result.authcode || '',
-          nmiResponse: JSON.stringify(result)
+          transactionId: result.transactionid as string,
+          authCode: result.authcode as string || '',
+          cavv: subscription.threeDSCavv || undefined
         }
       })
 
@@ -125,16 +124,14 @@ export async function POST(
       const transaction = await prisma.transaction.create({
         data: {
           businessId: subscription.businessId,
-          customerId: subscription.customerId,
           subscriptionId: subscription.id,
           orderId: subscription.orderId,
           amount: subscription.price,
           status: 'declined',
           type: 'manual',
           gatewayId: gateway.id,
-          declineCode: result.response_code || 'UNKNOWN',
-          declineReason: result.responsetext || 'Charge failed',
-          nmiResponse: JSON.stringify(result)
+          declineCode: result.response_code as string || 'UNKNOWN',
+          declineReason: result.responsetext as string || 'Charge failed'
         }
       })
 
