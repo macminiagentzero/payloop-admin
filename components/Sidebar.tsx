@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import BusinessSelector from './BusinessSelector'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: 'dashboard' },
@@ -137,6 +138,11 @@ export default function Sidebar() {
               <h1 className="text-lg font-bold text-white">PayLoop</h1>
               <p className="text-xs text-slate-400">Admin Dashboard</p>
             </div>
+          </div>
+
+          {/* Business Selector */}
+          <div className="px-3 py-2">
+            <BusinessSelector />
           </div>
 
           {/* Navigation */}

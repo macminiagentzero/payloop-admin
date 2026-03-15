@@ -1,23 +1,53 @@
 import { prisma } from '@/lib/prisma'
+import { cookies } from 'next/headers'
 
 /**
  * Get the current business context
  * 
- * For now, returns the default business (single-tenant setup)
- * In the future, this will get the business from session/cookie
- * 
- * Returns null if Business table doesn't exist (pre-migration)
+ * Priority:
+ * 1. Business ID from cookie (user selected)
+ * 2. Default business (slug: 'default')
+ * 3. First available business
+ * 4. null if no businesses exist
  */
 export async function getCurrentBusinessId(): Promise<string | null> {
   try {
-    // Try to get the default business
-    // This will fail gracefully if the Business table doesn't exist yet
-    const business = await prisma.business.findFirst({
-      where: { slug: 'default' },
+    // Try to get from cookie first (user's selection)
+    const cookieStore = await cookies()
+    const cookieBusinessId = cookieStore.get('businessId')?.value
+    
+    if (cookieBusinessId) {
+      // Verify this business still exists
+      const business = await prisma.business.findFirst({
+        where: { 
+          id: cookieBusinessId,
+          isActive: true 
+        },
+        select: { id: true }
+      })
+      
+      if (business) {
+        return business.id
+      }
+    }
+    
+    // Fall back to default business
+    const defaultBusiness = await prisma.business.findFirst({
+      where: { slug: 'default', isActive: true },
       select: { id: true }
     })
     
-    return business?.id || null
+    if (defaultBusiness) {
+      return defaultBusiness.id
+    }
+    
+    // Fall back to first active business
+    const firstBusiness = await prisma.business.findFirst({
+      where: { isActive: true },
+      select: { id: true }
+    })
+    
+    return firstBusiness?.id || null
   } catch (error: any) {
     // If Business table doesn't exist (P2021), return null
     // This allows the app to work before migration is run
