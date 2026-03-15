@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isAuthenticated } from '@/lib/auth'
+import { getCurrentBusinessId } from '@/lib/business'
 
 export async function GET(request: NextRequest) {
   // Auth check
@@ -9,6 +10,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const businessId = await getCurrentBusinessId()
     const { searchParams } = new URL(request.url)
     const range = searchParams.get('range') || '7days'
     
@@ -43,6 +45,24 @@ export async function GET(request: NextRequest) {
         startDate = new Date(2020, 0, 1) // Far enough back
         break
     }
+
+    // Build where clauses with business filter
+    const orderWhere: any = {
+      createdAt: { gte: startDate, lte: endDate }
+    }
+    if (businessId) {
+      orderWhere.businessId = businessId
+    }
+
+    const customerWhere: any = {}
+    if (businessId) {
+      customerWhere.businessId = businessId
+    }
+
+    const subscriptionWhere: any = { status: 'active' }
+    if (businessId) {
+      subscriptionWhere.businessId = businessId
+    }
     
     // Fetch stats for the date range
     const [
@@ -59,44 +79,46 @@ export async function GET(request: NextRequest) {
       prisma.order.aggregate({
         _sum: { total: true },
         where: {
-          createdAt: { gte: startDate, lte: endDate },
+          ...orderWhere,
           status: 'approved'
         }
       }),
       
       // Total orders in range
       prisma.order.count({
-        where: { createdAt: { gte: startDate, lte: endDate } }
+        where: orderWhere
       }),
       
       // Approved orders in range
       prisma.order.count({
-        where: { createdAt: { gte: startDate, lte: endDate }, status: 'approved' }
+        where: { ...orderWhere, status: 'approved' }
       }),
       
       // Declined orders in range
       prisma.order.count({
-        where: { createdAt: { gte: startDate, lte: endDate }, status: 'declined' }
+        where: { ...orderWhere, status: 'declined' }
       }),
       
       // Total customers (all time)
-      prisma.customer.count(),
+      prisma.customer.count({
+        where: customerWhere
+      }),
       
       // Active subscriptions (all time)
-      prisma.subscription.count({ where: { status: 'active' } }),
+      prisma.subscription.count({ where: subscriptionWhere }),
       
       // Recent orders (last 10)
       prisma.order.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: { customer: true },
-        where: { createdAt: { gte: startDate, lte: endDate } }
+        where: orderWhere
       }),
       
       // Chart data - group by day
       prisma.order.findMany({
         where: {
-          createdAt: { gte: startDate, lte: endDate },
+          ...orderWhere,
           status: 'approved'
         },
         select: {

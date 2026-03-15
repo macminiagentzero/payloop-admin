@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isAuthenticated } from '@/lib/auth'
+import { getCurrentBusinessId } from '@/lib/business'
 
 export async function GET() {
   // Auth check
@@ -9,7 +10,16 @@ export async function GET() {
   }
 
   try {
+    const businessId = await getCurrentBusinessId()
+
+    // Build where clause
+    const where: any = {}
+    if (businessId) {
+      where.businessId = businessId
+    }
+
     const subscriptions = await prisma.subscription.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: { customer: true },
     })

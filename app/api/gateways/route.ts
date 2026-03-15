@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isAuthenticated } from '@/lib/auth'
+import { getCurrentBusinessId } from '@/lib/business'
 
-// GET - List all gateways
+// GET - List all gateways for current business
 export async function GET() {
   // Auth check
   if (!await isAuthenticated()) {
@@ -10,9 +11,22 @@ export async function GET() {
   }
 
   try {
+    const businessId = await getCurrentBusinessId()
+    
+    if (!businessId) {
+      // Fallback: return all gateways (for backward compatibility during migration)
+      const gateways = await prisma.$queryRaw`
+        SELECT id, name, "displayName", type, "isActive", "isDefault", "createdAt"
+        FROM "PaymentGateway"
+        ORDER BY "isDefault" DESC, "createdAt" ASC
+      `
+      return NextResponse.json(gateways)
+    }
+
     const gateways = await prisma.$queryRaw`
       SELECT id, name, "displayName", type, "isActive", "isDefault", "createdAt"
       FROM "PaymentGateway"
+      WHERE "businessId" = ${businessId}
       ORDER BY "isDefault" DESC, "createdAt" ASC
     `
     return NextResponse.json(gateways)
@@ -30,6 +44,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const businessId = await getCurrentBusinessId()
     const body = await request.json()
     const { name, displayName, type, nmiSecurityKey, nmiEndpoint, nmiMerchantId, isActive, isDefault } = body
 
@@ -50,7 +65,13 @@ export async function POST(request: NextRequest) {
     }
 
     // If setting as default, unset other defaults first
-    if (isDefault) {
+    if (isDefault && businessId) {
+      await prisma.$executeRaw`
+        UPDATE "PaymentGateway"
+        SET "isDefault" = false
+        WHERE "businessId" = ${businessId} AND "isDefault" = true
+      `
+    } else if (isDefault) {
       await prisma.$executeRaw`
         UPDATE "PaymentGateway"
         SET "isDefault" = false
@@ -59,10 +80,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert the new gateway
-    await prisma.$executeRaw`
-      INSERT INTO "PaymentGateway" (id, name, "displayName", type, "nmiSecurityKey", "nmiEndpoint", "nmiMerchantId", "isActive", "isDefault", "createdAt", "updatedAt")
-      VALUES (gen_random_uuid(), ${name}, ${displayName}, ${type}, ${nmiSecurityKey || null}, ${nmiEndpoint || null}, ${nmiMerchantId || null}, ${isActive ?? true}, ${isDefault ?? false}, NOW(), NOW())
-    `
+    if (businessId) {
+      await prisma.$executeRaw`
+        INSERT INTO "PaymentGateway" (id, "businessId", name, "displayName", type, "nmiSecurityKey", "nmiEndpoint", "nmiMerchantId", "isActive", "isDefault", "createdAt", "updatedAt")
+        VALUES (gen_random_uuid(), ${businessId}, ${name}, ${displayName}, ${type}, ${nmiSecurityKey || null}, ${nmiEndpoint || null}, ${nmiMerchantId || null}, ${isActive ?? true}, ${isDefault ?? false}, NOW(), NOW())
+      `
+    } else {
+      // Backward compatibility: no business context
+      await prisma.$executeRaw`
+        INSERT INTO "PaymentGateway" (id, name, "displayName", type, "nmiSecurityKey", "nmiEndpoint", "nmiMerchantId", "isActive", "isDefault", "createdAt", "updatedAt")
+        VALUES (gen_random_uuid(), ${name}, ${displayName}, ${type}, ${nmiSecurityKey || null}, ${nmiEndpoint || null}, ${nmiMerchantId || null}, ${isActive ?? true}, ${isDefault ?? false}, NOW(), NOW())
+      `
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

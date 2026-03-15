@@ -1,6 +1,6 @@
 generator client {
-  provider        = "prisma-client-js"
-  binaryTargets   = ["native", "debian-openssl-3.0.x"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -8,239 +8,340 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================
+// BUSINESS - Multi-tenancy
+// ============================================
+
+model Business {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique // URL-friendly identifier
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users          UserBusiness[]
+  customers      Customer[]
+  orders         Order[]
+  subscriptions  Subscription[]
+  transactions   Transaction[]
+  gateways       PaymentGateway[]
+  products       SubscriptionProduct[]
+  funnels        Funnel[]
+  settings       BusinessSetting[]
+  syncedProducts SyncedProduct[]
+  shopifyCarts   ShopifyCart[]
+}
+
+// User-Business relationship (a user can belong to multiple businesses)
+model UserBusiness {
+  userId     String
+  businessId String
+  role       String   @default("admin") // admin, manager, viewer
+  createdAt  DateTime @default(now())
+  Business   Business @relation(fields: [businessId], references: [id])
+
+  @@id([userId, businessId])
+  @@index([businessId])
+}
+
+// ============================================
+// CORE MODELS
+// ============================================
+
 // Customer information
 model Customer {
-  id               String   @id @default(uuid())
-  email            String   @unique
-  firstName        String
-  lastName         String
-  phone            String?
-  address          String?
-  city             String?
-  state            String?
-  zip              String?
-  country          String   @default("US")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  email     String
+  firstName String
+  lastName  String
+  phone     String?
+  address   String?
+  city      String?
+  state     String?
+  zip       String?
+  country   String   @default("US")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   paymentMethods PaymentMethod[]
-  orders          Order[]
-  subscriptions   Subscription[]
+  orders         Order[]
+  subscriptions  Subscription[]
+
+  @@unique([businessId, email])
+  @@index([businessId])
 }
 
 // Payment methods
 model PaymentMethod {
-  id             String   @id @default(uuid())
-  customerId     String
-  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  
-  nmiVaultId     String?  @unique // NMI Customer Vault ID
-  
+  id         String   @id @default(uuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  nmiVaultId String? @unique // NMI Customer Vault ID
+
   // Basis Theory token for card vaulting
   basisTheoryTokenId String? @unique // Basis Theory token ID
-  
-  cardLast4      String
-  cardType       String
-  cardExpMonth   String
-  cardExpYear    String
-  
-  isDefault      Boolean  @default(false)
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
 
-  orders        Order[]
+  cardLast4    String
+  cardType     String
+  cardExpMonth String
+  cardExpYear  String
+
+  isDefault Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
 }
 
 // Orders
 model Order {
-  id              String   @id @default(uuid())
-  customerId      String
-  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
   paymentMethodId String?
   paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
-  
-  gatewayId       String?
-  
+
+  gatewayId String?
+
   // Order details
-  type            String   @default("initial")
-  
-  subtotal        Float    @default(0)
-  tax             Float    @default(0)
-  shipping        Float    @default(0)
-  total           Float
-  currency        String   @default("USD")
-  
-  items           String   // JSON string
-  
+  type String @default("initial")
+
+  subtotal Float  @default(0)
+  tax      Float  @default(0)
+  shipping Float  @default(0)
+  total    Float
+  currency String @default("USD")
+
+  items String // JSON string
+
   // Card info (stored at checkout)
-  cardType        String?  // visa, mastercard, amex, discover
-  cardLast4       String?  // last 4 digits
-  
-  nmiTransactionId String?  @unique
+  cardType  String? // visa, mastercard, amex, discover
+  cardLast4 String? // last 4 digits
+
+  nmiTransactionId String? @unique
   nmiAuthCode      String?
-  nmiResponse      String?  // JSON string
-  
-  status          String   @default("pending")
-  errorMessage    String?
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  subscriptions   Subscription[]
-  transactions    Transaction[]
+  nmiResponse      String? // JSON string
+
+  status       String  @default("pending")
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subscriptions Subscription[]
+  transactions  Transaction[]
+
+  @@index([businessId])
+  @@index([customerId])
 }
 
 // Payment gateways
 model PaymentGateway {
-  id              String   @id @default(uuid())
-  name            String   @unique
-  displayName     String
-  type            String   // nmi, stripe, etc
-  isActive        Boolean  @default(true)
-  isDefault       Boolean  @default(false)
-  
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  name        String
+  displayName String
+  type        String // nmi, stripe, etc
+  isActive    Boolean @default(true)
+  isDefault   Boolean @default(false)
+
   // NMI config
-  nmiSecurityKey  String?
-  nmiEndpoint     String?
-  nmiMerchantId   String?
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  nmiSecurityKey String?
+  nmiEndpoint    String?
+  nmiMerchantId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([businessId, name])
+  @@index([businessId])
 }
 
 // Synced products from Shopify
 model SyncedProduct {
-  id              String   @id @default(uuid())
-  shopifyId       String   @unique
-  title           String
-  handle          String
-  price           Float
-  compareAtPrice  Float?
-  image           String?
-  description     String?
-  productType     String?
-  vendor          String?
-  tags            String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  shopifyId      String
+  title          String
+  handle         String
+  price          Float
+  compareAtPrice Float?
+  image          String?
+  description    String?
+  productType    String?
+  vendor         String?
+  tags           String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([businessId, shopifyId])
+  @@index([businessId])
 }
 
 // Cart data from Shopify webhooks
 model ShopifyCart {
-  id              String   @id @default(uuid())
-  cartToken       String   @unique  // Shopify cart token
-  cartId          String?           // Shopify cart ID (gid://shopify/Cart/xxx)
-  items           Json              // Array of cart items
-  total           Float
-  currency        String   @default("USD")
-  customerEmail   String?
-  customerData    Json?             // Customer info if available
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  cartToken     String // Shopify cart token
+  cartId        String? // Shopify cart ID (gid://shopify/Cart/xxx)
+  items         Json // Array of cart items
+  total         Float
+  currency      String   @default("USD")
+  customerEmail String?
+  customerData  Json? // Customer info if available
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([businessId, cartToken])
+  @@index([businessId])
   @@index([cartToken])
 }
 
 // Subscription products
 model SubscriptionProduct {
-  id              String   @id @default(uuid())
-  name            String
-  description     String?
-  price           Float
-  interval        String   @default("month")
-  intervalCount   Int      @default(1)
-  showOnCheckout  Boolean  @default(true)
-  gatewayId       String?
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  name           String
+  description    String?
+  price          Float
+  interval       String   @default("month")
+  intervalCount  Int      @default(1)
+  showOnCheckout Boolean  @default(true)
+  gatewayId      String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([businessId])
 }
 
-// Settings
+// Settings (global - system-wide)
 model Setting {
-  id              String   @id @default(uuid())
-  key             String   @unique
-  value           String
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Business-specific settings
+model BusinessSetting {
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([businessId, key])
+  @@index([businessId])
 }
 
 // Subscriptions
 model Subscription {
-  id              String   @id @default(uuid())
-  customerId      String
-  customer        Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  
-  orderId         String?  // Link to initial order
-  order           Order?   @relation(fields: [orderId], references: [id])
-  
-  name            String   // Subscription name
-  price           Float    @default(9.99) // Monthly price (default for existing subscriptions)
-  
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  orderId String? // Link to initial order
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  name  String // Subscription name
+  price Float  @default(9.99) // Monthly price (default for existing subscriptions)
+
   // Token for rebills (Basis Theory or NMI vault)
-  gatewayId       String?  // Which gateway to use for rebills
-  nmiVaultId      String?  // Legacy NMI vault ID
+  gatewayId          String? // Which gateway to use for rebills
+  nmiVaultId         String? // Legacy NMI vault ID
   basisTheoryTokenId String? // Basis Theory token for rebills
-  
+
   // 3DS data for rebills
-  threeDSCavv     String?  // CAVV for cycle 2 rebill
-  threeDSXid      String?  // XID for cycle 2 rebill
-  threeDSEci      String?  // ECI for cycle 2 rebill
+  threeDSCavv     String? // CAVV for cycle 2 rebill
+  threeDSXid      String? // XID for cycle 2 rebill
+  threeDSEci      String? // ECI for cycle 2 rebill
   threeDSAuthDate DateTime? // Date of initial 3DS auth
-  
-  status          String   @default("active") // active, paused, cancelled
-  pausedAt        DateTime? // When subscription was paused
-  cancelledAt     DateTime? // When subscription was cancelled
-  
+
+  status      String    @default("active") // active, paused, cancelled
+  pausedAt    DateTime? // When subscription was paused
+  cancelledAt DateTime? // When subscription was cancelled
+
   // Billing configuration
-  billingInterval      Int      @default(1) // Every X intervals
-  billingIntervalUnit  String   @default("month") // day, week, month, year
-  billingDay      Int      @default(1) // Day of month/week (1-31 or 1-7)
-  nextBillDate    DateTime?
-  lastBillDate    DateTime?
-  totalBills      Int      @default(0)
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  transactions    Transaction[]
+  billingInterval     Int       @default(1) // Every X intervals
+  billingIntervalUnit String    @default("month") // day, week, month, year
+  billingDay          Int       @default(1) // Day of month/week (1-31 or 1-7)
+  nextBillDate        DateTime?
+  lastBillDate        DateTime?
+  totalBills          Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+
+  @@index([businessId])
+  @@index([customerId])
 }
 
 // Transactions - tracks all charges (initial + rebills)
 model Transaction {
-  id              String   @id @default(uuid())
-  subscriptionId  String
-  subscription    Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  
-  orderId         String?  // Link to original order
-  order           Order?   @relation(fields: [orderId], references: [id])
-  
-  amount          Float
-  currency        String   @default("USD")
-  
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  orderId String? // Link to original order
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  amount   Float
+  currency String @default("USD")
+
   // Payment details
-  gatewayId       String?  // Which gateway processed this
-  transactionId   String?  // NMI/processor transaction ID
-  authCode       String?  // Authorization code
-  
+  gatewayId     String? // Which gateway processed this
+  transactionId String? // NMI/processor transaction ID
+  authCode      String? // Authorization code
+
   // 3DS data
-  cavv            String?  // CAVV if 3DS was used
-  
-  status          String   @default("pending") // pending, approved, declined, refunded
-  
+  cavv String? // CAVV if 3DS was used
+
+  status String @default("pending") // pending, approved, declined, refunded
+
   // Decline info (for declined transactions)
-  declineCode     String?  // NMI decline code (e.g., "N51", "N54")
-  declineReason   String?  // Human-readable reason (e.g., "Insufficient Funds")
-  
+  declineCode   String? // NMI decline code (e.g., "N51", "N54")
+  declineReason String? // Human-readable reason (e.g., "Insufficient Funds")
+
   // Metadata
-  type            String   @default("rebill") // initial, rebill, refund
-  description     String?  // Human-readable description
-  
-  createdAt       DateTime @default(now())
-  
+  type        String  @default("rebill") // initial, rebill, refund
+  description String? // Human-readable description
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
   @@index([subscriptionId])
   @@index([orderId])
   @@index([createdAt])
@@ -252,78 +353,84 @@ model Transaction {
 
 // Funnel - A checkout funnel (store → checkout → upsell → thankyou)
 model Funnel {
-  id              String   @id @default(uuid())
-  name            String                    // "Main Store Checkout"
-  slug            String   @unique          // URL slug for checkout
-  storeId         String?                   // Shopify store ID if connected
-  isActive        Boolean  @default(true)
-  isDefault       Boolean  @default(false)
-  
+  id         String   @id @default(uuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id])
+
+  name      String // "Main Store Checkout"
+  slug      String // URL slug for checkout
+  storeId   String? // Shopify store ID if connected
+  isActive  Boolean @default(true)
+  isDefault Boolean @default(false)
+
   // Domain configuration
-  customDomain    String?                   // Custom checkout domain
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  steps           FunnelStep[]
-  checkoutConfig  CheckoutConfig?
+  customDomain String? // Custom checkout domain
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  steps          FunnelStep[]
+  checkoutConfig CheckoutConfig?
+
+  @@unique([businessId, slug])
+  @@index([businessId])
 }
 
 // FunnelStep - Steps in the funnel (checkout, upsell, thankyou)
 model FunnelStep {
-  id              String   @id @default(uuid())
-  funnelId        String
-  funnel          Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-  
-  type            String                    // 'checkout', 'upsell', 'thankyou'
-  name            String                    // "Main Checkout", "Upsell 1", etc.
-  order           Int                       // Step order in funnel
-  
+  id       String @id @default(uuid())
+  funnelId String
+  funnel   Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
+  type  String // 'checkout', 'upsell', 'thankyou'
+  name  String // "Main Checkout", "Upsell 1", etc.
+  order Int // Step order in funnel
+
   // Step configuration
-  config          Json?                     // Step-specific settings
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
+  config Json? // Step-specific settings
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([funnelId])
 }
 
 // CheckoutConfig - Drag-drop checkout page configuration
 model CheckoutConfig {
-  id              String   @id @default(uuid())
-  funnelId        String   @unique
-  funnel          Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-  
+  id       String @id @default(uuid())
+  funnelId String @unique
+  funnel   Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
   // Block order and visibility
-  blocks          Json                      // [{id, type, order, visible, props}]
-  
+  blocks Json // [{id, type, order, visible, props}]
+
   // Global styles
-  styles          Json?                     // {primaryColor, fontFamily, buttonRadius, etc.}
-  
+  styles Json? // {primaryColor, fontFamily, buttonRadius, etc.}
+
   // Content overrides
-  content         Json?                     // {title, subtitle, logoUrl, footerText, etc.}
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  content Json? // {title, subtitle, logoUrl, footerText, etc.}
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // CheckoutBlock - Predefined block definitions
 model CheckoutBlock {
-  id              String   @id @default(uuid())
-  type            String   @unique           // 'logo', 'hero', 'order-summary', 'payment-form', etc.
-  name            String                    // Display name
-  category        String                    // 'content', 'payment', 'trust', 'custom'
-  description     String?
-  
+  id          String  @id @default(uuid())
+  type        String  @unique // 'logo', 'hero', 'order-summary', 'payment-form', etc.
+  name        String // Display name
+  category    String // 'content', 'payment', 'trust', 'custom'
+  description String?
+
   // Is this block required? (can't be deleted)
-  isRequired      Boolean  @default(false)
-  
+  isRequired Boolean @default(false)
+
   // Default props for this block
-  defaultProps    Json?                     // {text: 'Welcome', style: {}}
-  
+  defaultProps Json? // {text: 'Welcome', style: {}}
+
   // UI hints for editor
-  icon            String?                   // Icon name for editor
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  icon String? // Icon name for editor
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

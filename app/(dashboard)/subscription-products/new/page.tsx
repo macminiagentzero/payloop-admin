@@ -1,10 +1,18 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { getCurrentBusinessId } from '@/lib/business'
 
 async function getGateways() {
   const { prisma } = await import('@/lib/prisma')
+  const businessId = await getCurrentBusinessId()
+  
+  const where: any = { isActive: true }
+  if (businessId) {
+    where.businessId = businessId
+  }
+  
   return prisma.paymentGateway.findMany({
-    where: { isActive: true },
+    where,
     orderBy: { name: 'asc' }
   })
 }
@@ -16,6 +24,7 @@ export default async function NewSubscriptionProductPage() {
     'use server'
     
     const { prisma } = await import('@/lib/prisma')
+    const businessId = await getCurrentBusinessId()
     
     const name = formData.get('name') as string
     const description = formData.get('description') as string
@@ -24,18 +33,22 @@ export default async function NewSubscriptionProductPage() {
     const intervalCount = parseInt(formData.get('intervalCount') as string) || 1
     const gatewayId = formData.get('gatewayId') as string || null
     
-    await prisma.subscriptionProduct.create({
-      data: {
-        name,
-        description: description || null,
-        price,
-        interval,
-        intervalCount,
-        gatewayId: gatewayId || null,
-        showOnCheckout: true,
-        isActive: true
-      }
-    })
+    const data: any = {
+      name,
+      description: description || null,
+      price,
+      interval,
+      intervalCount,
+      gatewayId: gatewayId || null,
+      showOnCheckout: true,
+      isActive: true
+    }
+    
+    if (businessId) {
+      data.businessId = businessId
+    }
+    
+    await prisma.subscriptionProduct.create({ data })
     
     revalidatePath('/subscription-products')
     redirect('/subscription-products')

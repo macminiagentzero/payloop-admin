@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isAuthenticated } from '@/lib/auth'
+import { getCurrentBusinessId } from '@/lib/business'
 
 function getDateRange(range: string): { startDate: Date; endDate: Date } {
   const now = new Date()
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const businessId = await getCurrentBusinessId()
     const { searchParams } = new URL(request.url)
     const range = searchParams.get('range') || '7days'
     const startDateParam = searchParams.get('startDate')
@@ -69,13 +71,21 @@ export async function GET(request: NextRequest) {
       endDate = rangeDates.endDate
     }
 
-    const orders = await prisma.order.findMany({
-      where: {
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
+    // Build where clause
+    const where: any = {
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
       },
+    }
+    
+    // Add business filter if available
+    if (businessId) {
+      where.businessId = businessId
+    }
+
+    const orders = await prisma.order.findMany({
+      where,
       orderBy: { createdAt: 'desc' },
       include: { 
         customer: true,
