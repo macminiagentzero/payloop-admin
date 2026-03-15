@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { getCurrentBusinessId } from '@/lib/business'
 
 interface GatewayResult {
   id: string
@@ -12,12 +13,26 @@ interface GatewayResult {
 }
 
 export default async function GatewaysPage() {
-  // Get all payment gateways
-  const gateways = await prisma.$queryRaw<GatewayResult[]>`
-    SELECT id, name, "displayName", type, "isActive", "isDefault", "createdAt"
-    FROM "PaymentGateway"
-    ORDER BY "isDefault" DESC, "createdAt" ASC
-  `.catch(() => []) as GatewayResult[]
+  const businessId = await getCurrentBusinessId()
+  
+  // Get all payment gateways for current business
+  let gateways: GatewayResult[]
+  
+  if (businessId) {
+    gateways = await prisma.$queryRaw<GatewayResult[]>`
+      SELECT id, name, "displayName", type, "isActive", "isDefault", "createdAt"
+      FROM "PaymentGateway"
+      WHERE "businessId" = ${businessId}
+      ORDER BY "isDefault" DESC, "createdAt" ASC
+    `.catch(() => []) as GatewayResult[]
+  } else {
+    // Fallback: get all gateways (backward compatibility during migration)
+    gateways = await prisma.$queryRaw<GatewayResult[]>`
+      SELECT id, name, "displayName", type, "isActive", "isDefault", "createdAt"
+      FROM "PaymentGateway"
+      ORDER BY "isDefault" DESC, "createdAt" ASC
+    `.catch(() => []) as GatewayResult[]
+  }
 
   return (
     <div className="space-y-6">

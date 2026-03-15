@@ -1,18 +1,33 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { GatewaySelect } from '@/components/GatewaySelect'
+import { getCurrentBusinessId } from '@/lib/business'
 
 async function getSubscriptionProducts() {
+  const businessId = await getCurrentBusinessId()
+  
+  const where: any = { isActive: true }
+  if (businessId) {
+    where.businessId = businessId
+  }
+  
   const products = await prisma.subscriptionProduct.findMany({
-    where: { isActive: true },
+    where,
     orderBy: { name: 'asc' }
   })
   return products
 }
 
 async function getGateways() {
+  const businessId = await getCurrentBusinessId()
+  
+  const where: any = { isActive: true }
+  if (businessId) {
+    where.businessId = businessId
+  }
+  
   const gateways = await prisma.paymentGateway.findMany({
-    where: { isActive: true },
+    where,
     orderBy: { name: 'asc' }
   })
   return gateways
