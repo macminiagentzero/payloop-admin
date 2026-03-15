@@ -507,8 +507,6 @@ export default function BusinessList({ businesses }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
             {/* Payment Settings */}
             <div className="border-t border-slate-200 pt-4 mt-4">
               <h4 className="text-sm font-medium text-slate-700 mb-3">Payment Settings</h4>
@@ -520,51 +518,59 @@ export default function BusinessList({ businesses }: Props) {
                   onChange={(e) => setFormData({ ...formData, use3ds: e.target.checked })}
                   className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
                 />
-                <label htmlFor="use3ds-edit" className="text-sm text-slate-700">
-                  Enable 3DS (3D Secure) for payments
-                </label>
-              </div>
-              <p className="text-xs text-slate-500 mt-1 ml-7">
-                Recommended for high-risk transactions. Disabling may increase fraud liability.
-              </p>
-            </div>
-
-                <label className="block text-sm font-medium text-slate-700 mb-1">Primary Color</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={formData.primaryColor}
-                    onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
-                    className="w-10 h-10 rounded border border-slate-300 cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={formData.primaryColor}
-                    onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Accent Color</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={formData.accentColor}
-                    onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
-                    className="w-10 h-10 rounded border border-slate-300 cursor-pointer"
-                  />
-                  <input
-                    type="text"
-                    value={formData.accentColor}
-                    onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
-                    className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
+                <div>
+                  <label htmlFor="use3ds-edit" className="text-sm font-medium text-slate-700">
+                    Enable 3DS (3D Secure) for payments
+                  </label>
+                  <p className="text-xs text-slate-500">
+                    Recommended for high-risk transactions. Disabling may increase fraud liability.
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3">
+            {/* Branding */}
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <h4 className="text-sm font-medium text-slate-700 mb-3">Branding</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Primary Color</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.primaryColor}
+                      onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
+                      className="w-10 h-10 rounded border border-slate-300 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={formData.primaryColor}
+                      onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Accent Color</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.accentColor}
+                      onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
+                      className="w-10 h-10 rounded border border-slate-300 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={formData.accentColor}
+                      onChange={(e) => setFormData({ ...formData, accentColor: e.target.value })}
+                      className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 mt-4">
               <button
                 type="button"
                 onClick={cancelEdit}
