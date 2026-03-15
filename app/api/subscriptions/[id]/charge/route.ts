@@ -61,17 +61,24 @@ export async function POST(
       order_description: `Manual charge: ${subscription.name || 'Subscription'}`
     })
 
-    console.log(`[Manual Charge] Charging subscription ${subscription.id}: $${subscription.price}`)
-    console.log(`[Manual Charge] Gateway: ${gateway.nmiEndpoint || 'seamlesschex.transactiongateway.com'}`)
-    console.log(`[Manual Charge] Vault ID: ${subscription.nmiVaultId || 'MISSING'}`)
-    console.log(`[Manual Charge] Has CAVV: ${!!subscription.threeDSCavv}`)
-
     if (!subscription.nmiVaultId) {
       return NextResponse.json({ 
         error: 'No payment method stored', 
         details: 'Subscription missing nmiVaultId - cannot charge without stored card'
       }, { status: 400 })
     }
+
+    if (!gateway.nmiSecurityKey) {
+      return NextResponse.json({ 
+        error: 'Gateway not configured', 
+        details: 'Payment gateway missing security key'
+      }, { status: 400 })
+    }
+
+    console.log(`[Manual Charge] Charging subscription ${subscription.id}: $${subscription.price}`)
+    console.log(`[Manual Charge] Gateway: ${gateway.nmiEndpoint || 'seamlesschex.transactiongateway.com'}`)
+    console.log(`[Manual Charge] Vault ID: ${subscription.nmiVaultId}`)
+    console.log(`[Manual Charge] Has CAVV: ${!!subscription.threeDSCavv}`)
 
     const response = await fetch(NMI_URL, {
       method: 'POST',
