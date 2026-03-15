@@ -119,7 +119,9 @@ export async function POST(
       })
 
       // Redirect back to subscription page with success message
-      return NextResponse.redirect(new URL(`/subscriptions/${id}?success=Charged $${subscription.price.toFixed(2)} successfully`, request.url))
+      const host = request.headers.get('host') || 'crm.mypayloop.co'
+      const protocol = request.headers.get('x-forwarded-proto') || 'https'
+      return NextResponse.redirect(new URL(`${protocol}://${host}/subscriptions/${id}?success=Charged%20$${subscription.price.toFixed(2)}%20successfully`))
 
     } else {
       // Failed
@@ -138,14 +140,18 @@ export async function POST(
       })
 
       // Redirect back with error message
-      return NextResponse.redirect(new URL(`/subscriptions/${id}?error=${encodeURIComponent(result.error || result.message || 'Charge failed')}`, request.url))
+      const host = request.headers.get('host') || 'crm.mypayloop.co'
+      const protocol = request.headers.get('x-forwarded-proto') || 'https'
+      return NextResponse.redirect(new URL(`${protocol}://${host}/subscriptions/${id}?error=${encodeURIComponent(result.error || result.message || 'Charge failed')}`))
     }
 
   } catch (error) {
     console.error('Manual charge error:', error)
     // Redirect back with error
-    const id = await props.params.then(p => p.id)
-    return NextResponse.redirect(new URL(`/subscriptions/${id}?error=${encodeURIComponent(error instanceof Error ? error.message : 'Failed to process charge')}`, request.url))
+    const { id } = await props.params
+    const host = request.headers.get('host') || 'crm.mypayloop.co'
+    const protocol = request.headers.get('x-forwarded-proto') || 'https'
+    return NextResponse.redirect(new URL(`${protocol}://${host}/subscriptions/${id}?error=${encodeURIComponent(error instanceof Error ? error.message : 'Failed to process charge')}`))
   }
 }
 
