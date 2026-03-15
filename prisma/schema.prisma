@@ -200,19 +200,17 @@ model ShopifyCart {
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id])
 
-  cartToken     String // Shopify cart token
-  cartId        String? // Shopify cart ID (gid://shopify/Cart/xxx)
-  items         Json // Array of cart items
+  cartToken     String   @unique // Shopify cart token (keep unique for backward compat)
+  cartId        String?           // Shopify cart ID (gid://shopify/Cart/xxx)
+  items         Json              // Array of cart items
   total         Float
   currency      String   @default("USD")
   customerEmail String?
-  customerData  Json? // Customer info if available
+  customerData  Json?             // Customer info if available
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  @@unique([businessId, cartToken])
   @@index([businessId])
-  @@index([cartToken])
 }
 
 // Subscription products
