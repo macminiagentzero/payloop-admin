@@ -227,6 +227,10 @@ model Transaction {
   
   status          String   @default("pending") // pending, approved, declined, refunded
   
+  // Decline info (for declined transactions)
+  declineCode     String?  // NMI decline code (e.g., "N51", "N54")
+  declineReason   String?  // Human-readable reason (e.g., "Insufficient Funds")
+  
   // Metadata
   type            String   @default("rebill") // initial, rebill, refund
   description     String?  // Human-readable description

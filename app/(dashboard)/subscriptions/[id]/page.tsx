@@ -256,6 +256,9 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
                     <div>
                       <p className="font-medium text-gray-900">{fmt(tx.amount)}</p>
                       <p className="text-sm text-gray-500">{tx.description || tx.type}</p>
+                      {tx.status === 'declined' && tx.declineReason && (
+                        <p className="text-xs text-red-600 mt-0.5 font-medium">{tx.declineReason}</p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right flex items-center gap-3">

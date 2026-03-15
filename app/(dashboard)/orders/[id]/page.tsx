@@ -417,6 +417,11 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
                       <div className="text-sm text-slate-500">
                         {tx.description || `Transaction #${tx.id.slice(0, 8)}`}
                       </div>
+                      {tx.status === 'declined' && tx.declineReason && (
+                        <div className="text-xs text-red-600 mt-1 font-medium">
+                          {tx.declineReason}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
