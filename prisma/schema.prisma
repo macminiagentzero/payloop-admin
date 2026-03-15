@@ -17,7 +17,7 @@ model Business {
   name         String
   slug         String   @unique
   customDomain String?  @unique  // checkout.mellone.co (user's custom domain)
-  defaultDomain String  @unique   // auto-generated: slug.checkout.payloop.onrender.com
+  defaultDomain String?  @unique   // auto-generated: slug.checkout.payloop.onrender.com
   shopifyDomain String?           // mellone.myshopify.com
   
   // Branding
