@@ -25,6 +25,9 @@ model Business {
   shopifyAdminToken      String?   // Admin API token
   shopifyWebhookSecret   String?   // Webhook verification secret
   
+  // Checkout Type
+  checkoutType            String   @default("nmi-vault-3ds")  // nmi-vault-3ds | stripe-sub | stripe-one-time
+  
   // Branding
   logoUrl      String?
   primaryColor String?  @default("#4F46E5")  // Indigo

@@ -198,6 +198,16 @@ export async function POST() {
         results.push(`! Shopify fields: ${e.message}`)
       }
       
+      // Step 11: Add checkoutType field
+      try {
+        await prisma.$executeRawUnsafe(`
+          ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "checkoutType" TEXT DEFAULT 'nmi-vault-3ds'
+        `)
+        results.push('✓ Checkout type field added')
+      } catch (e: any) {
+        results.push(`! checkoutType: ${e.message}`)
+      }
+      
       // Set defaultDomain for existing businesses that don't have it
       await prisma.$executeRawUnsafe(`
         UPDATE "Business" 

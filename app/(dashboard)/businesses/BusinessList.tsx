@@ -13,6 +13,7 @@ interface Business {
   shopifyStorefrontToken: string | null
   shopifyAdminToken: string | null
   shopifyWebhookSecret: string | null
+  checkoutType: string | null
   logoUrl: string | null
   primaryColor: string | null
   accentColor: string | null
@@ -44,6 +45,7 @@ export default function BusinessList({ businesses }: Props) {
     shopifyStorefrontToken: '',
     shopifyAdminToken: '',
     shopifyWebhookSecret: '',
+    checkoutType: 'nmi-vault-3ds',
     primaryColor: '#4F46E5',
     accentColor: '#7C3AED'
   })
@@ -74,6 +76,7 @@ export default function BusinessList({ businesses }: Props) {
       shopifyStorefrontToken: '',
       shopifyAdminToken: '',
       shopifyWebhookSecret: '',
+      checkoutType: 'nmi-vault-3ds',
       primaryColor: '#4F46E5',
       accentColor: '#7C3AED'
     })
@@ -135,6 +138,7 @@ export default function BusinessList({ businesses }: Props) {
           shopifyStorefrontToken: formData.shopifyStorefrontToken || null,
           shopifyAdminToken: formData.shopifyAdminToken || null,
           shopifyWebhookSecret: formData.shopifyWebhookSecret || null,
+          checkoutType: formData.checkoutType || 'nmi-vault-3ds',
           primaryColor: formData.primaryColor,
           accentColor: formData.accentColor
         })
@@ -174,6 +178,7 @@ export default function BusinessList({ businesses }: Props) {
           shopifyStorefrontToken: formData.shopifyStorefrontToken || null,
           shopifyAdminToken: formData.shopifyAdminToken || null,
           shopifyWebhookSecret: formData.shopifyWebhookSecret || null,
+          checkoutType: formData.checkoutType || 'nmi-vault-3ds',
           primaryColor: formData.primaryColor,
           accentColor: formData.accentColor
         })
@@ -204,6 +209,7 @@ export default function BusinessList({ businesses }: Props) {
       shopifyStorefrontToken: business.shopifyStorefrontToken || '',
       shopifyAdminToken: business.shopifyAdminToken || '',
       shopifyWebhookSecret: business.shopifyWebhookSecret || '',
+      checkoutType: business.checkoutType || 'nmi-vault-3ds',
       primaryColor: business.primaryColor || '#4F46E5',
       accentColor: business.accentColor || '#7C3AED'
     })
@@ -266,6 +272,25 @@ export default function BusinessList({ businesses }: Props) {
                   placeholder="my-store"
                 />
                 <p className="text-xs text-slate-500 mt-1">Auto-generated from name if empty</p>
+              </div>
+            </div>
+
+            {/* Checkout Type Section */}
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <h4 className="text-sm font-medium text-slate-700 mb-3">Checkout Type</h4>
+              <div>
+                <select
+                  value={formData.checkoutType}
+                  onChange={(e) => setFormData({ ...formData, checkoutType: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="nmi-vault-3ds">NMI + 3DS + Vault (Current)</option>
+                  <option value="stripe-subscription">Stripe Subscription (Coming Soon)</option>
+                  <option value="stripe-one-time">Stripe One-Time (Coming Soon)</option>
+                </select>
+                <p className="text-xs text-slate-500 mt-1">
+                  NMI + 3DS is the current checkout with 3DS protection and card vaulting
+                </p>
               </div>
             </div>
 
@@ -418,6 +443,25 @@ export default function BusinessList({ businesses }: Props) {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   required
                 />
+              </div>
+            </div>
+
+            {/* Checkout Type Section */}
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <h4 className="text-sm font-medium text-slate-700 mb-3">Checkout Type</h4>
+              <div>
+                <select
+                  value={formData.checkoutType}
+                  onChange={(e) => setFormData({ ...formData, checkoutType: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                >
+                  <option value="nmi-vault-3ds">NMI + 3DS + Vault (Current)</option>
+                  <option value="stripe-subscription">Stripe Subscription (Coming Soon)</option>
+                  <option value="stripe-one-time">Stripe One-Time (Coming Soon)</option>
+                </select>
+                <p className="text-xs text-slate-500 mt-1">
+                  NMI + 3DS is the current checkout with 3DS protection and card vaulting
+                </p>
               </div>
             </div>
 
