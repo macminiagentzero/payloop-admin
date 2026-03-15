@@ -5,7 +5,7 @@ import { isAuthenticated } from '@/lib/auth'
 // POST /api/subscriptions/:id/cancel
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await isAuthenticated()
   if (!auth) {
@@ -13,11 +13,12 @@ export async function POST(
   }
 
   try {
+    const { id } = await params
     const body = await request.json().catch(() => ({}))
     const { reason } = body
 
     const subscription = await prisma.subscription.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { business: true, customer: true }
     })
 
@@ -32,28 +33,14 @@ export async function POST(
     }
 
     const updated = await prisma.subscription.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: 'cancelled',
         cancelledAt: new Date(),
         cancelReason: reason || 'Cancelled by admin',
-        nextBillDate: null // Clear next bill date
+        nextBillDate: null
       }
     })
-
-    // Create activity log
-    await prisma.activityLog.create({
-      data: {
-        businessId: subscription.businessId,
-        type: 'subscription.cancelled',
-        description: `Subscription "${subscription.name}" cancelled`,
-        metadata: {
-          subscriptionId: subscription.id,
-          customerId: subscription.customerId,
-          reason: reason || 'Cancelled by admin'
-        }
-      }
-    }).catch(() => {})
 
     return NextResponse.json({
       success: true,

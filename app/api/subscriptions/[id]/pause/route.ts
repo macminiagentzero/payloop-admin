@@ -5,7 +5,7 @@ import { isAuthenticated } from '@/lib/auth'
 // POST /api/subscriptions/:id/pause
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await isAuthenticated()
   if (!auth) {
@@ -13,8 +13,10 @@ export async function POST(
   }
 
   try {
+    const { id } = await params
+
     const subscription = await prisma.subscription.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { business: true }
     })
 
@@ -30,25 +32,12 @@ export async function POST(
     }
 
     const updated = await prisma.subscription.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: 'paused',
         pausedAt: new Date()
       }
     })
-
-    // Create activity log
-    await prisma.activityLog.create({
-      data: {
-        businessId: subscription.businessId,
-        type: 'subscription.paused',
-        description: `Subscription "${subscription.name}" paused`,
-        metadata: {
-          subscriptionId: subscription.id,
-          customerId: subscription.customerId
-        }
-      }
-    }).catch(() => {}) // Ignore if activity log doesn't exist
 
     return NextResponse.json({
       success: true,

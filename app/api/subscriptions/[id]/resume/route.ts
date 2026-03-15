@@ -5,7 +5,7 @@ import { isAuthenticated } from '@/lib/auth'
 // POST /api/subscriptions/:id/resume
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await isAuthenticated()
   if (!auth) {
@@ -13,8 +13,10 @@ export async function POST(
   }
 
   try {
+    const { id } = await params
+
     const subscription = await prisma.subscription.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: { business: true }
     })
 
@@ -45,26 +47,13 @@ export async function POST(
     }
 
     const updated = await prisma.subscription.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status: 'active',
         pausedAt: null,
         nextBillDate
       }
     })
-
-    // Create activity log
-    await prisma.activityLog.create({
-      data: {
-        businessId: subscription.businessId,
-        type: 'subscription.resumed',
-        description: `Subscription "${subscription.name}" resumed`,
-        metadata: {
-          subscriptionId: subscription.id,
-          customerId: subscription.customerId
-        }
-      }
-    }).catch(() => {})
 
     return NextResponse.json({
       success: true,
