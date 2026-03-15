@@ -13,6 +13,7 @@ export default async function BusinessesPage() {
       name: true,
       slug: true,
       customDomain: true,
+      defaultDomain: true,
       shopifyDomain: true,
       logoUrl: true,
       primaryColor: true,

@@ -8,6 +8,7 @@ interface Business {
   name: string
   slug: string
   customDomain: string | null
+  defaultDomain: string | null
   shopifyDomain: string | null
   logoUrl: string | null
   primaryColor: string | null
@@ -19,7 +20,6 @@ interface Business {
     subscriptions: number
     customers: number
   }
-  dnsConfigured?: boolean
 }
 
 interface Props {
