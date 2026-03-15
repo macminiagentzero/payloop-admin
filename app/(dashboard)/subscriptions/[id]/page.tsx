@@ -66,7 +66,7 @@ export default async function SubscriptionDetailPage({ params, searchParams }: {
             <div className="flex gap-2">
               {subscription.status === 'active' && (
                 <>
-                  <form action={`/api/subscriptions/${id}/charge`} method="POST">
+                  <form action={`/api/subscriptions/${id}/charge?from=subscriptions`} method="POST">
                     <button className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
                       Charge Now
                     </button>

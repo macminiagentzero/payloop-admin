@@ -14,6 +14,15 @@ export async function POST(
 
   try {
     const { id } = await props.params
+    
+    // Get the 'from' query parameter to know where to redirect
+    const url = new URL(request.url)
+    const from = url.searchParams.get('from') || 'subscriptions'
+    
+    // Build redirect base URL
+    const host = request.headers.get('host') || 'crm.mypayloop.co'
+    const protocol = request.headers.get('x-forwarded-proto') || 'https'
+    const baseUrl = `${protocol}://${host}`
 
     const subscription = await prisma.subscription.findUnique({
       where: { id },
@@ -118,10 +127,12 @@ export async function POST(
         }
       })
 
-      // Redirect back to subscription page with success message
-      const host = request.headers.get('host') || 'crm.mypayloop.co'
-      const protocol = request.headers.get('x-forwarded-proto') || 'https'
-      return NextResponse.redirect(new URL(`${protocol}://${host}/subscriptions/${id}?success=Charged%20$${subscription.price.toFixed(2)}%20successfully`))
+      // Redirect back with success message
+      if (from === 'order') {
+        return NextResponse.redirect(new URL(`${baseUrl}/orders/${subscription.orderId}?success=Charged%20$${subscription.price.toFixed(2)}%20successfully`))
+      } else {
+        return NextResponse.redirect(new URL(`${baseUrl}/subscriptions/${id}?success=Charged%20$${subscription.price.toFixed(2)}%20successfully`))
+      }
 
     } else {
       // Failed
@@ -140,18 +151,24 @@ export async function POST(
       })
 
       // Redirect back with error message
-      const host = request.headers.get('host') || 'crm.mypayloop.co'
-      const protocol = request.headers.get('x-forwarded-proto') || 'https'
-      return NextResponse.redirect(new URL(`${protocol}://${host}/subscriptions/${id}?error=${encodeURIComponent(result.error || result.message || 'Charge failed')}`))
+      if (from === 'order') {
+        return NextResponse.redirect(new URL(`${baseUrl}/orders/${subscription.orderId}?error=${encodeURIComponent(result.error || result.message || 'Charge failed')}`))
+      } else {
+        return NextResponse.redirect(new URL(`${baseUrl}/subscriptions/${id}?error=${encodeURIComponent(result.error || result.message || 'Charge failed')}`))
+      }
     }
 
   } catch (error) {
     console.error('Manual charge error:', error)
     // Redirect back with error
     const { id } = await props.params
+    const url = new URL(request.url)
+    const from = url.searchParams.get('from') || 'subscriptions'
     const host = request.headers.get('host') || 'crm.mypayloop.co'
     const protocol = request.headers.get('x-forwarded-proto') || 'https'
-    return NextResponse.redirect(new URL(`${protocol}://${host}/subscriptions/${id}?error=${encodeURIComponent(error instanceof Error ? error.message : 'Failed to process charge')}`))
+    const baseUrl = `${protocol}://${host}`
+    
+    return NextResponse.redirect(new URL(`${baseUrl}/subscriptions/${id}?error=${encodeURIComponent(error instanceof Error ? error.message : 'Failed to process charge')}`))
   }
 }
 

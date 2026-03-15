@@ -145,7 +145,7 @@ export default async function ChargeSubscription({ params }: Props) {
               </div>
             </div>
           ) : (
-            <form action={`/api/subscriptions/${subscriptionId}/charge`} method="POST" className="p-6">
+            <form action={`/api/subscriptions/${subscriptionId}/charge?from=order`} method="POST" className="p-6">
               <input type="hidden" name="orderId" value={id} />
               
               {/* Warning */}
