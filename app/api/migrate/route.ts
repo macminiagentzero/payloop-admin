@@ -17,9 +17,17 @@ export async function POST() {
       'ALTER TABLE "Transaction" ADD COLUMN IF NOT EXISTS "declineReason" TEXT'
     )
     
+    // Add card columns to Order table
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "cardType" TEXT'
+    )
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "cardLast4" TEXT'
+    )
+    
     return NextResponse.json({ 
       success: true, 
-      message: 'Migration complete: Added declineCode and declineReason columns to Transaction table' 
+      message: 'Migration complete: Added decline columns to Transaction and card columns to Order' 
     })
   } catch (error: any) {
     // Check if columns already exist

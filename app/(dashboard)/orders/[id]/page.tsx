@@ -204,6 +204,37 @@ export default async function OrderDetailPage({ params, searchParams }: Props) {
                       <code className="text-xs bg-slate-100 px-2 py-0.5 rounded font-mono">{order.nmiTransactionId}</code>
                     </div>
                   )}
+                  {order.cardType && order.cardLast4 && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-slate-500">Card</span>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 rounded text-xs font-medium">
+                        {order.cardType === 'visa' && (
+                          <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10zm-7.467-3.5c-.895 0-1.617.45-1.95 1.15l-.053.11-.055-.11c-.333-.7-1.054-1.15-1.95-1.15-1.263 0-2.275.99-2.275 2.3 0 .815.414 1.525 1.104 1.9.29.157.615.237.963.237.894 0 1.616-.45 1.95-1.15l.052-.11.055.11c.333.7 1.055 1.15 1.95 1.15.348 0 .673-.08.963-.237.69-.375 1.104-1.085 1.104-1.9 0-1.31-1.012-2.3-2.258-2.3z"/>
+                          </svg>
+                        )}
+                        {order.cardType === 'mastercard' && (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="9" cy="12" r="5" fill="#EB001B"/>
+                            <circle cx="15" cy="12" r="5" fill="#F79E1B"/>
+                          </svg>
+                        )}
+                        {order.cardType === 'amex' && (
+                          <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+                          </svg>
+                        )}
+                        {order.cardType === 'discover' && (
+                          <svg className="w-4 h-4 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                          </svg>
+                        )}
+                        <span className="capitalize">{order.cardType}</span>
+                        <span className="text-slate-400">••••</span>
+                        <span>{order.cardLast4}</span>
+                      </span>
+                    </div>
+                  )}
                   {gateway && (
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-slate-500">Gateway</span>

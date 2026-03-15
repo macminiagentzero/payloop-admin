@@ -74,6 +74,10 @@ model Order {
   
   items           String   // JSON string
   
+  // Card info (stored at checkout)
+  cardType        String?  // visa, mastercard, amex, discover
+  cardLast4       String?  // last 4 digits
+  
   nmiTransactionId String?  @unique
   nmiAuthCode      String?
   nmiResponse      String?  // JSON string
