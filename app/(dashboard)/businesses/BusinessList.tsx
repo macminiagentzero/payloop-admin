@@ -13,6 +13,8 @@ interface Business {
   shopifyStorefrontToken: string | null
   shopifyAdminToken: string | null
   shopifyWebhookSecret: string | null
+  stripeApiKey: string | null
+  stripeWebhookSecret: string | null
   checkoutType: string | null
   logoUrl: string | null
   primaryColor: string | null
@@ -45,6 +47,8 @@ export default function BusinessList({ businesses }: Props) {
     shopifyStorefrontToken: '',
     shopifyAdminToken: '',
     shopifyWebhookSecret: '',
+    stripeApiKey: '',
+    stripeWebhookSecret: '',
     checkoutType: 'nmi-vault-3ds',
     primaryColor: '#4F46E5',
     accentColor: '#7C3AED'
@@ -76,6 +80,8 @@ export default function BusinessList({ businesses }: Props) {
       shopifyStorefrontToken: '',
       shopifyAdminToken: '',
       shopifyWebhookSecret: '',
+      stripeApiKey: '',
+      stripeWebhookSecret: '',
       checkoutType: 'nmi-vault-3ds',
       primaryColor: '#4F46E5',
       accentColor: '#7C3AED'
@@ -138,6 +144,8 @@ export default function BusinessList({ businesses }: Props) {
           shopifyStorefrontToken: formData.shopifyStorefrontToken || null,
           shopifyAdminToken: formData.shopifyAdminToken || null,
           shopifyWebhookSecret: formData.shopifyWebhookSecret || null,
+          stripeApiKey: formData.stripeApiKey || null,
+          stripeWebhookSecret: formData.stripeWebhookSecret || null,
           checkoutType: formData.checkoutType || 'nmi-vault-3ds',
           primaryColor: formData.primaryColor,
           accentColor: formData.accentColor
@@ -178,6 +186,8 @@ export default function BusinessList({ businesses }: Props) {
           shopifyStorefrontToken: formData.shopifyStorefrontToken || null,
           shopifyAdminToken: formData.shopifyAdminToken || null,
           shopifyWebhookSecret: formData.shopifyWebhookSecret || null,
+          stripeApiKey: formData.stripeApiKey || null,
+          stripeWebhookSecret: formData.stripeWebhookSecret || null,
           checkoutType: formData.checkoutType || 'nmi-vault-3ds',
           primaryColor: formData.primaryColor,
           accentColor: formData.accentColor
@@ -209,6 +219,8 @@ export default function BusinessList({ businesses }: Props) {
       shopifyStorefrontToken: business.shopifyStorefrontToken || '',
       shopifyAdminToken: business.shopifyAdminToken || '',
       shopifyWebhookSecret: business.shopifyWebhookSecret || '',
+      stripeApiKey: business.stripeApiKey || '',
+      stripeWebhookSecret: business.stripeWebhookSecret || '',
       checkoutType: business.checkoutType || 'nmi-vault-3ds',
       primaryColor: business.primaryColor || '#4F46E5',
       accentColor: business.accentColor || '#7C3AED'

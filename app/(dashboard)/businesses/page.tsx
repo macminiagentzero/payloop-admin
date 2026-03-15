@@ -18,6 +18,8 @@ export default async function BusinessesPage() {
       shopifyStorefrontToken: true,
       shopifyAdminToken: true,
       shopifyWebhookSecret: true,
+      stripeApiKey: true,
+      stripeWebhookSecret: true,
       checkoutType: true,
       logoUrl: true,
       primaryColor: true,
