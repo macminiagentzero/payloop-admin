@@ -53,8 +53,8 @@ export default function BusinessSelector() {
     setCurrentBusiness(business)
     setIsOpen(false)
     
-    // Refresh the page to apply the new business context
-    router.refresh()
+    // Full page reload to apply the new business context
+    window.location.reload()
   }
 
   if (loading) {
