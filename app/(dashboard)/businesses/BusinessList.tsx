@@ -13,6 +13,7 @@ interface Business {
   shopifyStorefrontToken: string | null
   shopifyAdminToken: string | null
   shopifyWebhookSecret: string | null
+  use3ds: boolean
   logoUrl: string | null
   primaryColor: string | null
   accentColor: string | null
@@ -44,6 +45,7 @@ export default function BusinessList({ businesses }: Props) {
     shopifyStorefrontToken: '',
     shopifyAdminToken: '',
     shopifyWebhookSecret: '',
+    use3ds: true,
     primaryColor: '#4F46E5',
     accentColor: '#7C3AED'
   })
@@ -74,6 +76,7 @@ export default function BusinessList({ businesses }: Props) {
       shopifyStorefrontToken: '',
       shopifyAdminToken: '',
       shopifyWebhookSecret: '',
+      use3ds: true,
       primaryColor: '#4F46E5',
       accentColor: '#7C3AED'
     })
@@ -135,6 +138,7 @@ export default function BusinessList({ businesses }: Props) {
           shopifyStorefrontToken: formData.shopifyStorefrontToken || null,
           shopifyAdminToken: formData.shopifyAdminToken || null,
           shopifyWebhookSecret: formData.shopifyWebhookSecret || null,
+          use3ds: formData.use3ds,
           primaryColor: formData.primaryColor,
           accentColor: formData.accentColor
         })
@@ -174,6 +178,7 @@ export default function BusinessList({ businesses }: Props) {
           shopifyStorefrontToken: formData.shopifyStorefrontToken || null,
           shopifyAdminToken: formData.shopifyAdminToken || null,
           shopifyWebhookSecret: formData.shopifyWebhookSecret || null,
+          use3ds: formData.use3ds,
           primaryColor: formData.primaryColor,
           accentColor: formData.accentColor
         })
@@ -204,6 +209,7 @@ export default function BusinessList({ businesses }: Props) {
       shopifyStorefrontToken: business.shopifyStorefrontToken || '',
       shopifyAdminToken: business.shopifyAdminToken || '',
       shopifyWebhookSecret: business.shopifyWebhookSecret || '',
+      use3ds: business.use3ds ?? true,
       primaryColor: business.primaryColor || '#4F46E5',
       accentColor: business.accentColor || '#7C3AED'
     })
@@ -331,6 +337,26 @@ export default function BusinessList({ businesses }: Props) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
+            {/* Payment Settings */}
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <h4 className="text-sm font-medium text-slate-700 mb-3">Payment Settings</h4>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="use3ds-create"
+                  checked={formData.use3ds}
+                  onChange={(e) => setFormData({ ...formData, use3ds: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                />
+                <label htmlFor="use3ds-create" className="text-sm text-slate-700">
+                  Enable 3DS (3D Secure) for payments
+                </label>
+              </div>
+              <p className="text-xs text-slate-500 mt-1 ml-7">
+                Recommended for high-risk transactions. Disabling may increase fraud liability.
+              </p>
+            </div>
+
                 <label className="block text-sm font-medium text-slate-700 mb-1">Primary Color</label>
                 <div className="flex items-center gap-2">
                   <input
@@ -483,6 +509,26 @@ export default function BusinessList({ businesses }: Props) {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
+            {/* Payment Settings */}
+            <div className="border-t border-slate-200 pt-4 mt-4">
+              <h4 className="text-sm font-medium text-slate-700 mb-3">Payment Settings</h4>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="use3ds-edit"
+                  checked={formData.use3ds}
+                  onChange={(e) => setFormData({ ...formData, use3ds: e.target.checked })}
+                  className="w-4 h-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500"
+                />
+                <label htmlFor="use3ds-edit" className="text-sm text-slate-700">
+                  Enable 3DS (3D Secure) for payments
+                </label>
+              </div>
+              <p className="text-xs text-slate-500 mt-1 ml-7">
+                Recommended for high-risk transactions. Disabling may increase fraud liability.
+              </p>
+            </div>
+
                 <label className="block text-sm font-medium text-slate-700 mb-1">Primary Color</label>
                 <div className="flex items-center gap-2">
                   <input

@@ -25,6 +25,9 @@ model Business {
   shopifyAdminToken      String?   // Admin API token
   shopifyWebhookSecret   String?   // Webhook verification secret
   
+  // Payment Settings
+  use3ds                 Boolean  @default(true)  // Enable 3DS for this business
+  
   // Branding
   logoUrl      String?
   primaryColor String?  @default("#4F46E5")  // Indigo

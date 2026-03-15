@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
       shopifyStorefrontToken,
       shopifyAdminToken,
       shopifyWebhookSecret,
+      use3ds,
       primaryColor,
       accentColor,
       logoUrl 
@@ -123,6 +124,7 @@ export async function POST(request: NextRequest) {
         shopifyStorefrontToken: shopifyStorefrontToken || null,
         shopifyAdminToken: shopifyAdminToken || null,
         shopifyWebhookSecret: shopifyWebhookSecret || null,
+        use3ds: use3ds ?? true,
         primaryColor: primaryColor || '#4F46E5',
         accentColor: accentColor || '#7C3AED',
         logoUrl: logoUrl || null,
@@ -145,7 +147,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { id, name, slug, customDomain, shopifyDomain, shopifyStorefrontToken, shopifyAdminToken, shopifyWebhookSecret, primaryColor, accentColor, logoUrl, isActive } = body
+    const { id, name, slug, customDomain, shopifyDomain, shopifyStorefrontToken, shopifyAdminToken, shopifyWebhookSecret, use3ds, primaryColor, accentColor, logoUrl, isActive } = body
 
     if (!id) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
@@ -198,6 +200,7 @@ export async function PATCH(request: NextRequest) {
     if (shopifyStorefrontToken !== undefined) updateData.shopifyStorefrontToken = shopifyStorefrontToken || null
     if (shopifyAdminToken !== undefined) updateData.shopifyAdminToken = shopifyAdminToken || null
     if (shopifyWebhookSecret !== undefined) updateData.shopifyWebhookSecret = shopifyWebhookSecret || null
+    if (use3ds !== undefined) updateData.use3ds = use3ds
     if (primaryColor !== undefined) updateData.primaryColor = primaryColor
     if (accentColor !== undefined) updateData.accentColor = accentColor
     if (logoUrl !== undefined) updateData.logoUrl = logoUrl || null

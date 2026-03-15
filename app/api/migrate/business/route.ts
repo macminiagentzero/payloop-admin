@@ -205,6 +205,16 @@ export async function POST() {
         WHERE "defaultDomain" IS NULL AND slug = 'default'
       `)
       
+      // Step 13: Add use3ds field
+      try {
+        await prisma.$executeRawUnsafe(`
+          ALTER TABLE "Business" ADD COLUMN IF NOT EXISTS "use3ds" BOOLEAN DEFAULT true
+        `)
+        results.push('✓ use3ds field added')
+      } catch (e: any) {
+        results.push(`! use3ds: ${e.message}`)
+      }
+      
       results.push('✓ Business customization fields added')
     } catch (e: any) {
       results.push(`! Business fields: ${e.message}`)
