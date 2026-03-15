@@ -62,6 +62,16 @@ export async function POST(
     })
 
     console.log(`[Manual Charge] Charging subscription ${subscription.id}: $${subscription.price}`)
+    console.log(`[Manual Charge] Gateway: ${gateway.nmiEndpoint || 'seamlesschex.transactiongateway.com'}`)
+    console.log(`[Manual Charge] Vault ID: ${subscription.nmiVaultId || 'MISSING'}`)
+    console.log(`[Manual Charge] Has CAVV: ${!!subscription.threeDSCavv}`)
+
+    if (!subscription.nmiVaultId) {
+      return NextResponse.json({ 
+        error: 'No payment method stored', 
+        details: 'Subscription missing nmiVaultId - cannot charge without stored card'
+      }, { status: 400 })
+    }
 
     const response = await fetch(NMI_URL, {
       method: 'POST',
@@ -69,6 +79,8 @@ export async function POST(
     })
 
     const text = await response.text()
+    console.log(`[Manual Charge] NMI Response:`, text)
+    
     const result = Object.fromEntries(new URLSearchParams(text))
 
     if (result.response === '1') {
@@ -147,7 +159,8 @@ export async function POST(
     console.error('Manual charge error:', error)
     return NextResponse.json({ 
       error: 'Failed to process charge',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 })
   }
 }
