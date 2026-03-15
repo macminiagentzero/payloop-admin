@@ -43,28 +43,14 @@ export async function POST(
       return NextResponse.json({ error: 'No payment gateway configured' }, { status: 400 })
     }
 
-    // Charge using stored CAVV
-    const NMI_URL = `https://${gateway.nmiEndpoint || 'seamlesschex.transactiongateway.com'}/api/transact.php`
+    // Check for payment method
+    const hasVaultId = !!subscription.nmiVaultId
+    const hasBasisTheoryToken = !!subscription.basisTheoryTokenId
     
-    const body = new URLSearchParams({
-      username: gateway.nmiSecurityKey || '',
-      password: '',
-      type: 'sale',
-      amount: subscription.price.toFixed(2),
-      customer_vault_id: subscription.nmiVaultId || '',
-      cardholder_auth: subscription.threeDSCavv ? 'verified' : '',
-      cavv: subscription.threeDSCavv || '',
-      email: subscription.customer?.email || '',
-      first_name: subscription.customer?.firstName || '',
-      last_name: subscription.customer?.lastName || '',
-      orderid: `manual_${subscription.id}_${Date.now()}`,
-      order_description: `Manual charge: ${subscription.name || 'Subscription'}`
-    })
-
-    if (!subscription.nmiVaultId) {
+    if (!hasVaultId && !hasBasisTheoryToken) {
       return NextResponse.json({ 
         error: 'No payment method stored', 
-        details: 'Subscription missing nmiVaultId - cannot charge without stored card'
+        details: 'Subscription missing payment method - cannot charge'
       }, { status: 400 })
     }
 
@@ -77,20 +63,20 @@ export async function POST(
 
     console.log(`[Manual Charge] Charging subscription ${subscription.id}: $${subscription.price}`)
     console.log(`[Manual Charge] Gateway: ${gateway.nmiEndpoint || 'seamlesschex.transactiongateway.com'}`)
-    console.log(`[Manual Charge] Vault ID: ${subscription.nmiVaultId}`)
+    console.log(`[Manual Charge] Payment Method: ${hasVaultId ? 'NMI Vault' : 'Basis Theory Token'}`)
     console.log(`[Manual Charge] Has CAVV: ${!!subscription.threeDSCavv}`)
 
-    const response = await fetch(NMI_URL, {
-      method: 'POST',
-      body
-    })
+    let result: { success: boolean; transactionId?: string; authCode?: string; message?: string; error?: string; response_code?: string }
 
-    const text = await response.text()
-    console.log(`[Manual Charge] NMI Response:`, text)
-    
-    const result = Object.fromEntries(new URLSearchParams(text))
+    if (hasBasisTheoryToken) {
+      // Charge via Basis Theory Proxy
+      result = await chargeViaBasisTheory(subscription, gateway)
+    } else {
+      // Charge via NMI Vault
+      result = await chargeViaNMI(subscription, gateway)
+    }
 
-    if (result.response === '1') {
+    if (result.success) {
       // Success
       const transaction = await prisma.transaction.create({
         data: {
@@ -101,8 +87,8 @@ export async function POST(
           status: 'approved',
           type: 'manual',
           gatewayId: gateway.id,
-          transactionId: result.transactionid as string,
-          authCode: result.authcode as string || '',
+          transactionId: result.transactionId,
+          authCode: result.authCode || '',
           cavv: subscription.threeDSCavv || undefined
         }
       })
@@ -149,14 +135,14 @@ export async function POST(
           status: 'declined',
           type: 'manual',
           gatewayId: gateway.id,
-          declineCode: result.response_code as string || 'UNKNOWN',
-          declineReason: result.responsetext as string || 'Charge failed'
+          declineCode: result.response_code || 'UNKNOWN',
+          declineReason: result.error || result.message || 'Charge failed'
         }
       })
 
       return NextResponse.json({
         success: false,
-        error: result.responsetext || 'Charge failed',
+        error: result.error || result.message || 'Charge failed',
         declineCode: result.response_code,
         transaction
       }, { status: 400 })
@@ -169,5 +155,130 @@ export async function POST(
       details: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 })
+  }
+}
+
+// Charge via Basis Theory Proxy
+async function chargeViaBasisTheory(subscription: any, gateway: any) {
+  const BT_PRIVATE_KEY = process.env.BT_PRIVATE_KEY
+  const NMI_ENDPOINT = gateway.nmiEndpoint || 'secure.safewebservices.com'
+  
+  if (!BT_PRIVATE_KEY) {
+    return { success: false, error: 'Basis Theory not configured' }
+  }
+
+  console.log('[Manual Charge] Charging via Basis Theory Proxy...')
+
+  const nmiData = new URLSearchParams({
+    type: 'sale',
+    security_key: gateway.nmiSecurityKey,
+    amount: subscription.price.toFixed(2),
+    ccnumber: `{{ token: ${subscription.basisTheoryTokenId} | json: "$.data.number" }}`,
+    ccexp: `{{ token: ${subscription.basisTheoryTokenId} | json: "$.data" | card_exp: "MMYY" }}`,
+    cvv: '',
+    firstname: subscription.customer?.firstName || '',
+    lastname: subscription.customer?.lastName || '',
+    email: subscription.customer?.email || '',
+    initiator: 'merchant',
+    orderid: `manual_${subscription.id}_${Date.now()}`,
+    order_description: `Manual charge: ${subscription.name || 'Subscription'}`,
+    // 3DS data
+    ...(subscription.threeDSCavv && {
+      cardholder_auth: 'verified',
+      cavv: subscription.threeDSCavv,
+      directory_server_id: subscription.threeDSXid || '',
+      eci: subscription.threeDSEci || ''
+    })
+  })
+
+  try {
+    const response = await fetch('https://api.basistheory.com/proxy', {
+      method: 'POST',
+      headers: {
+        'BT-API-KEY': BT_PRIVATE_KEY,
+        'BT-PROXY-URL': `https://${NMI_ENDPOINT}/api/transact.php`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: nmiData
+    })
+
+    const text = await response.text()
+    console.log('[Manual Charge] Basis Theory Response:', text)
+    
+    const result = Object.fromEntries(new URLSearchParams(text))
+
+    if (result.response === '1') {
+      return {
+        success: true,
+        transactionId: result.transactionid as string,
+        authCode: result.authcode as string
+      }
+    } else {
+      return {
+        success: false,
+        error: result.responsetext as string || 'Charge failed',
+        response_code: result.response_code as string
+      }
+    }
+  } catch (error) {
+    console.error('[Manual Charge] Basis Theory error:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Basis Theory request failed'
+    }
+  }
+}
+
+// Charge via NMI Vault
+async function chargeViaNMI(subscription: any, gateway: any) {
+  const NMI_URL = `https://${gateway.nmiEndpoint || 'seamlesschex.transactiongateway.com'}/api/transact.php`
+  
+  const body = new URLSearchParams({
+    username: gateway.nmiSecurityKey || '',
+    password: '',
+    type: 'sale',
+    amount: subscription.price.toFixed(2),
+    customer_vault_id: subscription.nmiVaultId!,
+    cardholder_auth: subscription.threeDSCavv ? 'verified' : '',
+    cavv: subscription.threeDSCavv || '',
+    email: subscription.customer?.email || '',
+    first_name: subscription.customer?.firstName || '',
+    last_name: subscription.customer?.lastName || '',
+    orderid: `manual_${subscription.id}_${Date.now()}`,
+    order_description: `Manual charge: ${subscription.name || 'Subscription'}`
+  })
+
+  console.log('[Manual Charge] Charging via NMI Vault...')
+
+  try {
+    const response = await fetch(NMI_URL, {
+      method: 'POST',
+      body
+    })
+
+    const text = await response.text()
+    console.log('[Manual Charge] NMI Response:', text)
+    
+    const result = Object.fromEntries(new URLSearchParams(text))
+
+    if (result.response === '1') {
+      return {
+        success: true,
+        transactionId: result.transactionid as string,
+        authCode: result.authcode as string
+      }
+    } else {
+      return {
+        success: false,
+        error: result.responsetext as string || 'Charge failed',
+        response_code: result.response_code as string
+      }
+    }
+  } catch (error) {
+    console.error('[Manual Charge] NMI error:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'NMI request failed'
+    }
   }
 }
