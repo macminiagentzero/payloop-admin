@@ -53,8 +53,8 @@ model UserBusiness {
 // Customer information
 model Customer {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   email     String
   firstName String
@@ -103,8 +103,8 @@ model PaymentMethod {
 // Orders
 model Order {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
@@ -149,8 +149,8 @@ model Order {
 // Payment gateways
 model PaymentGateway {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   name        String
   displayName String
@@ -173,8 +173,8 @@ model PaymentGateway {
 // Synced products from Shopify
 model SyncedProduct {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   shopifyId      String
   title          String
@@ -197,8 +197,8 @@ model SyncedProduct {
 // Cart data from Shopify webhooks
 model ShopifyCart {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   cartToken     String // Shopify cart token
   cartId        String? // Shopify cart ID (gid://shopify/Cart/xxx)
@@ -218,8 +218,8 @@ model ShopifyCart {
 // Subscription products
 model SubscriptionProduct {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   name           String
   description    String?
@@ -247,8 +247,8 @@ model Setting {
 // Business-specific settings
 model BusinessSetting {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   key       String
   value     String
@@ -262,8 +262,8 @@ model BusinessSetting {
 // Subscriptions
 model Subscription {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   customerId String
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
@@ -309,8 +309,8 @@ model Subscription {
 // Transactions - tracks all charges (initial + rebills)
 model Transaction {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   subscriptionId String
   subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
@@ -354,8 +354,8 @@ model Transaction {
 // Funnel - A checkout funnel (store → checkout → upsell → thankyou)
 model Funnel {
   id         String   @id @default(uuid())
-  businessId String
-  business   Business @relation(fields: [businessId], references: [id])
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
 
   name      String // "Main Store Checkout"
   slug      String // URL slug for checkout
