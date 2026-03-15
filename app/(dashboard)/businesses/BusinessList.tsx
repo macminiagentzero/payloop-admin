@@ -50,6 +50,14 @@ export default function BusinessList({ businesses }: Props) {
     expected?: string
     instructions?: { steps: string[] }
   } | null>(null)
+  
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    id: string
+    name: string
+    counts: { orders: number; subscriptions: number; customers: number }
+  } | null>(null)
+  const [deleteInput, setDeleteInput] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   const resetForm = () => {
     setFormData({
@@ -60,6 +68,25 @@ export default function BusinessList({ businesses }: Props) {
       primaryColor: '#4F46E5',
       accentColor: '#7C3AED'
     })
+  }
+  
+  const handleDelete = async () => {
+    if (!deleteConfirm || deleteInput !== 'DELETE') return
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/businesses?id=${deleteConfirm.id}&confirmation=DELETE`, {
+        method: 'DELETE'
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to delete')
+      setDeleteConfirm(null)
+      setDeleteInput('')
+      router.refresh()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to delete business')
+    } finally {
+      setDeleting(false)
+    }
   }
   
   const verifyDNS = async (domain: string) => {
@@ -511,12 +538,30 @@ export default function BusinessList({ businesses }: Props) {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => startEdit(business)}
-                      className="text-indigo-600 hover:text-indigo-900 font-medium text-sm"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => startEdit(business)}
+                        className="text-indigo-600 hover:text-indigo-900 font-medium text-sm"
+                      >
+                        Edit
+                      </button>
+                      {business.slug !== 'default' && (
+                        <button
+                          onClick={() => setDeleteConfirm({
+                            id: business.id,
+                            name: business.name,
+                            counts: {
+                              orders: business._count?.orders || 0,
+                              subscriptions: business._count?.subscriptions || 0,
+                              customers: business._count?.customers || 0
+                            }
+                          })}
+                          className="text-red-600 hover:text-red-900 font-medium text-sm"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -584,6 +629,69 @@ export default function BusinessList({ businesses }: Props) {
                 className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => !deleting && setDeleteConfirm(null)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-slate-900">Delete Business</h3>
+              <button onClick={() => !deleting && setDeleteConfirm(null)} className="text-slate-400 hover:text-slate-600" disabled={deleting}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <p className="text-slate-600 mb-2">
+                You are about to delete <strong>{deleteConfirm.name}</strong>.
+              </p>
+              <p className="text-sm text-slate-500 mb-4">
+                This will permanently delete:
+              </p>
+              <ul className="text-sm text-slate-600 space-y-1 mb-4">
+                <li>• {deleteConfirm.counts.orders} orders</li>
+                <li>• {deleteConfirm.counts.subscriptions} subscriptions</li>
+                <li>• {deleteConfirm.counts.customers} customers</li>
+              </ul>
+              <p className="text-sm text-red-600 font-medium">
+                This action cannot be undone.
+              </p>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Type <strong>DELETE</strong> to confirm
+              </label>
+              <input
+                type="text"
+                value={deleteInput}
+                onChange={(e) => setDeleteInput(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="DELETE"
+                disabled={deleting}
+              />
+            </div>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                disabled={deleting}
+                className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting || deleteInput !== 'DELETE'}
+                className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? 'Deleting...' : 'Delete Business'}
               </button>
             </div>
           </div>
