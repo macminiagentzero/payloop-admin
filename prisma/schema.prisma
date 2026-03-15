@@ -299,9 +299,20 @@ model Subscription {
   threeDSEci      String? // ECI for cycle 2 rebill
   threeDSAuthDate DateTime? // Date of initial 3DS auth
 
-  status      String    @default("active") // active, paused, cancelled
+  status      String    @default("active") // active, paused, past_due, cancelled
+  
+  // Billing mode
+  billingMode  String    @default("automatic") // manual, automatic
+  
+  // Retry tracking for failed charges
+  retryCount   Int       @default(0)
+  maxRetries   Int       @default(3)
+  lastRetryAt  DateTime?
+  
+  // Cancellation
   pausedAt    DateTime? // When subscription was paused
   cancelledAt DateTime? // When subscription was cancelled
+  cancelReason String?   // Reason for cancellation
 
   // Billing configuration
   billingInterval     Int       @default(1) // Every X intervals
