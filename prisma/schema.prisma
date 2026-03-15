@@ -56,7 +56,7 @@ model Customer {
   businessId String?
   business   Business? @relation(fields: [businessId], references: [id])
 
-  email     String
+  email     String   @unique // Keep unique for backward compat
   firstName String
   lastName  String
   phone     String?
@@ -72,7 +72,6 @@ model Customer {
   orders         Order[]
   subscriptions  Subscription[]
 
-  @@unique([businessId, email])
   @@index([businessId])
 }
 
